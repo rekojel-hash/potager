@@ -1,0 +1,1635 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Potager</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1a0f06">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Potager">
+<meta name="application-name" content="Potager">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#1a0f06;--card:rgba(34,18,8,0.97);--gold:#c9a84c;--cream:#f0e8d8;--muted:#8a7055;--sage:#8aab52;--sky:#7ab8c4;--moon:#e8dfc0;--border:rgba(201,168,76,0.18);--red:#e05040;--green:#5a9e3a}
+body{background:var(--bg);color:var(--cream);font-family:'DM Sans',sans-serif;font-weight:300;min-height:100vh;padding-bottom:3rem}
+/* NAV */
+.nav{position:sticky;top:0;z-index:100;background:#0e0600;border-bottom:1px solid var(--border);display:flex;overflow-x:auto;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nb{flex:0 0 auto;padding:0.65rem 0.85rem;font-size:0.65rem;color:var(--muted);cursor:pointer;border:none;border-bottom:2px solid transparent;background:none;white-space:nowrap;transition:all 0.2s;font-family:'DM Sans',sans-serif}
+.nb:hover,.nb.on{color:var(--gold);border-bottom-color:var(--gold)}
+/* SECTIONS */
+.sec{display:none;animation:fi 0.25s ease}
+.sec.on{display:block}
+@keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+/* HEADER */
+.hdr{text-align:center;padding:1.3rem 1rem 0.9rem;border-bottom:1px solid var(--border)}
+.hdr h1{font-family:'Playfair Display',serif;font-size:1.45rem;color:var(--moon)}
+.hdr p{color:var(--gold);font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;margin-top:0.3rem}
+/* LIVE */
+.live{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border)}
+@media(max-width:450px){.live{grid-template-columns:1fr}}
+.moon-box{padding:0.9rem;background:rgba(0,0,0,0.3);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;gap:0.4rem;text-align:center}
+canvas{border-radius:50%}
+.moon-name{font-family:'Playfair Display',serif;font-size:0.85rem;color:var(--moon)}
+.bdg{display:inline-block;font-size:0.6rem;padding:0.16rem 0.5rem;border-radius:10px;margin:0.08rem 0}
+.bdg.up{background:rgba(138,171,82,0.15);border:1px solid rgba(138,171,82,0.4);color:var(--sage)}
+.bdg.dn{background:rgba(122,184,196,0.15);border:1px solid rgba(122,184,196,0.4);color:var(--sky)}
+.moon-tip{font-size:0.58rem;color:var(--muted);font-style:italic;line-height:1.4;max-width:145px}
+.wx-box{padding:0.9rem;display:flex;flex-direction:column;gap:0.3rem}
+.wx-loc{font-size:0.58rem;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase}
+.wx-main{display:flex;align-items:center;gap:0.65rem}
+.wx-ico{font-size:1.7rem;line-height:1}
+.wx-temp{font-family:'Playfair Display',serif;font-size:1.7rem;color:var(--moon);line-height:1}
+.wx-desc{font-size:0.65rem;color:var(--cream)}
+.wx-gr{display:grid;grid-template-columns:1fr 1fr;gap:0.18rem;margin-top:0.15rem}
+.wx-it{font-size:0.6rem;color:var(--muted)}
+.wx-it strong{color:var(--cream)}
+.wx-fc{display:flex;gap:0.22rem;margin-top:0.35rem;overflow-x:auto;padding-bottom:2px}
+.fc{flex:0 0 auto;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:5px;padding:0.3rem 0.35rem;text-align:center;min-width:38px}
+.fc-d{font-size:0.48rem;color:var(--muted)}
+.fc-i{font-size:0.85rem}
+.fc-x{font-size:0.6rem;color:var(--moon);font-weight:500}
+.fc-n{font-size:0.54rem;color:var(--muted)}
+.wx-alert{font-size:0.6rem;color:var(--red);background:rgba(224,80,64,0.1);border:1px solid rgba(224,80,64,0.25);border-radius:4px;padding:0.28rem 0.45rem;margin-bottom:0.2rem}
+.wx-load{font-size:0.68rem;color:var(--muted);font-style:italic;padding:0.7rem 0;text-align:center}
+/* CONSEIL JOUR */
+.cjour{padding:0.55rem 1rem;background:rgba(201,168,76,0.06);border-bottom:1px solid var(--border);font-size:0.68rem;color:var(--moon);text-align:center;font-style:italic;line-height:1.4}
+.cjour strong{color:var(--gold);font-style:normal}
+/* TITRES */
+.stit{font-family:'Playfair Display',serif;font-size:1.15rem;color:var(--moon);padding:1.1rem 1rem 0.25rem;border-bottom:1px solid var(--border)}
+.stit span{color:var(--gold)}
+.ssub{font-size:0.67rem;color:var(--muted);padding:0.3rem 1rem 0.7rem;font-style:italic}
+/* LÉGUMES */
+.ctrl{padding:0.65rem 1rem;display:flex;flex-direction:column;gap:0.4rem;border-bottom:1px solid var(--border)}
+.si{width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--cream);padding:0.38rem 0.75rem;border-radius:13px;font-family:'DM Sans',sans-serif;font-size:0.75rem;outline:none}
+.si::placeholder{color:var(--muted)}.si:focus{border-color:var(--gold)}
+.flts{display:flex;flex-wrap:wrap;gap:0.28rem}
+.fb{background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--moon);padding:0.25rem 0.6rem;border-radius:11px;cursor:pointer;font-size:0.6rem;font-family:'DM Sans',sans-serif;transition:all 0.2s;white-space:nowrap}
+.fb:hover,.fb.on{background:var(--gold);color:var(--bg);border-color:var(--gold);font-weight:500}
+.vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(265px,1fr));gap:1px;background:rgba(201,168,76,0.07)}
+@media(max-width:560px){.vgrid{grid-template-columns:1fr}}
+.sg{grid-column:1/-1;padding:0.75rem 1rem 0.3rem;font-family:'Playfair Display',serif;font-size:0.85rem;color:var(--gold);background:rgba(0,0,0,0.22);border-top:1px solid var(--border);font-style:italic}
+.card{background:var(--card);padding:0.95rem;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--c,var(--sage)),transparent);opacity:0.7}
+.chd{display:flex;align-items:flex-start;gap:0.5rem;margin-bottom:0.65rem}
+.cem{font-size:1.45rem;line-height:1;flex-shrink:0}
+.cnm{font-family:'Playfair Display',serif;font-size:0.92rem;color:var(--moon);line-height:1.2}
+.ctp{font-size:0.56rem;color:var(--gold);text-transform:uppercase;letter-spacing:0.1em;margin-top:0.1rem}
+.blbl{font-size:0.54rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.18rem}
+.babbr{display:grid;grid-template-columns:repeat(12,1fr);gap:1px;margin-bottom:0.1rem}
+.babbr span{font-size:0.4rem;color:var(--muted);text-align:center}
+.bar{display:grid;grid-template-columns:repeat(12,1fr);gap:1px;height:15px;margin-bottom:0.22rem}
+.bc{border-radius:1px;background:rgba(255,255,255,0.04)}
+.bc.s{background:rgba(138,171,82,0.55)}.bc.p{background:rgba(122,184,196,0.55)}.bc.r{background:rgba(201,168,76,0.7)}.bc.sp{background:linear-gradient(135deg,rgba(138,171,82,0.55)50%,rgba(122,184,196,0.55)50%)}
+.bleg{display:flex;gap:0.45rem;margin-bottom:0.6rem}
+.bleg span{font-size:0.54rem;color:var(--muted);display:flex;align-items:center;gap:0.18rem}
+.bleg span::before{content:'';width:7px;height:5px;border-radius:1px;display:inline-block}
+.ls::before{background:rgba(138,171,82,0.6)}.lp::before{background:rgba(122,184,196,0.6)}.lr::before{background:rgba(201,168,76,0.8)}
+.ig{display:grid;grid-template-columns:1fr 1fr;gap:0.3rem;margin-bottom:0.6rem}
+.ii{background:rgba(255,255,255,0.04);border-radius:4px;padding:0.32rem 0.5rem}
+.ii .l{font-size:0.5rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:0.1rem}
+.ii .v{font-size:0.65rem;color:var(--cream);line-height:1.3}
+.tags{display:flex;gap:0.22rem;flex-wrap:wrap;margin-bottom:0.5rem}
+.tag{font-size:0.56rem;padding:0.1rem 0.38rem;border-radius:8px;border:1px solid;white-space:nowrap}
+.tag.feuille{border-color:rgba(180,200,100,0.4);color:#b0cc60;background:rgba(180,200,100,0.07)}
+.tag.fruit{border-color:rgba(201,100,60,0.4);color:#e07050;background:rgba(201,100,60,0.07)}
+.tag.racine{border-color:rgba(201,168,76,0.4);color:var(--gold);background:rgba(201,168,76,0.07)}
+.tag.fleur{border-color:rgba(200,150,200,0.4);color:#c896c8;background:rgba(200,150,200,0.07)}
+.conseil{font-size:0.63rem;color:var(--muted);line-height:1.5;padding-top:0.42rem;border-top:1px solid rgba(255,255,255,0.05);font-style:italic}
+.conseil strong{color:var(--gold);font-style:normal;font-weight:500}
+.empty{padding:2rem;text-align:center;color:var(--muted);grid-column:1/-1;font-style:italic;font-size:0.75rem}
+/* AGENDA */
+.cal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:0.5rem;padding:0 1rem 1.5rem}
+.cal-card{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:6px;padding:0.6rem}
+.cal-card h3{font-family:'Playfair Display',serif;font-size:0.8rem;color:var(--gold);margin-bottom:0.32rem}
+.cal-card ul{list-style:none;font-size:0.6rem;color:var(--muted);line-height:1.7}
+.cal-card ul li::before{content:'→ ';color:var(--sage)}
+/* ROTATION */
+.rot-wrap{padding:0 1rem 1.5rem;display:flex;flex-direction:column;gap:0.8rem}
+.rot-box{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:0.85rem}
+.rot-box h3{font-family:'Playfair Display',serif;font-size:0.88rem;color:var(--gold);margin-bottom:0.6rem}
+.rule-row{display:flex;align-items:center;gap:0.35rem;margin-bottom:0.4rem;flex-wrap:wrap}
+.ftag{padding:0.13rem 0.45rem;border-radius:7px;font-size:0.6rem;font-weight:500}
+.rarrow{color:var(--muted);font-size:0.75rem}
+.fam-row{display:flex;align-items:flex-start;gap:0.6rem;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:6px;padding:0.6rem;margin-bottom:0.4rem}
+.fdot{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.fam-name{font-size:0.72rem;color:var(--moon);font-weight:500;margin-bottom:0.15rem}
+.fam-veg{font-size:0.6rem;color:var(--muted);margin-bottom:0.12rem}
+.fam-att{font-size:0.58rem;color:var(--red);opacity:0.85}
+.eviter-box{background:rgba(224,80,64,0.05);border:1px solid rgba(224,80,64,0.18);border-radius:8px;padding:0.75rem;font-size:0.63rem;color:var(--muted);line-height:1.95}
+.eviter-box strong{color:var(--cream)}
+/* COMPAGNONNAGE */
+.comp-wrap{padding:0 1rem 1.5rem}
+.comp-card{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:7px;padding:0.78rem;margin-bottom:0.5rem}
+.cp-name{font-family:'Playfair Display',serif;font-size:0.92rem;color:var(--moon);margin-bottom:0.55rem}
+.cp-lbl{font-size:0.55rem;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.2rem}
+.cp-lbl.g{color:var(--sage)}.cp-lbl.b{color:var(--red)}.cp-lbl.w{color:var(--muted)}
+.cp-items{display:flex;flex-wrap:wrap;gap:0.2rem;margin-bottom:0.35rem}
+.cpi{font-size:0.6rem;padding:0.1rem 0.38rem;border-radius:8px}
+.cpi.g{background:rgba(90,158,58,0.14);border:1px solid rgba(90,158,58,0.32);color:#8aab52}
+.cpi.b{background:rgba(224,80,64,0.11);border:1px solid rgba(224,80,64,0.28);color:#e07050}
+.cp-why{font-size:0.61rem;color:var(--muted);font-style:italic;line-height:1.45}
+/* ARROSAGE */
+.arr-wrap{padding:0 1rem 1.5rem;display:flex;flex-direction:column;gap:0.75rem}
+.arr-card{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:0.8rem}
+.arr-card h3{font-family:'Playfair Display',serif;font-size:0.85rem;color:var(--moon);margin-bottom:0.55rem}
+.arr-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.3rem;font-size:0.65rem}
+.arr-plant{color:var(--cream)}
+.arr-freq{color:var(--gold);font-size:0.6rem}
+.arr-l{color:var(--sky);font-size:0.6rem}
+.wbar{height:5px;border-radius:3px;background:rgba(122,184,196,0.12);margin-top:2px;overflow:hidden;margin-bottom:0.45rem}
+.wfill{height:100%;border-radius:3px;background:linear-gradient(90deg,rgba(122,184,196,0.4),rgba(122,184,196,0.85))}
+.arr-note{font-size:0.56rem;color:var(--muted);font-style:italic;margin-bottom:0.55rem}
+.arr-tips{background:rgba(122,184,196,0.05);border:1px solid rgba(122,184,196,0.18);border-radius:7px;padding:0.7rem}
+.arr-tips h4{font-size:0.7rem;color:var(--sky);margin-bottom:0.45rem}
+.arr-tips ul{list-style:none;font-size:0.62rem;color:var(--muted);line-height:1.85}
+.arr-tips li::before{content:'💧 ';opacity:0.6}
+.arr-wx{background:rgba(201,168,76,0.05);border:1px solid var(--border);border-radius:7px;padding:0.75rem}
+.arr-wx h3{font-size:0.8rem;color:var(--gold);margin-bottom:0.4rem;font-family:'Playfair Display',serif}
+/* SAUVEGARDE */
+.save-wrap{padding:0 1rem 2rem;display:flex;flex-direction:column;gap:1rem;max-width:520px;margin:0 auto}
+.save-card{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:1.1rem}
+.save-card h3{font-family:'Playfair Display',serif;font-size:1rem;color:var(--moon);margin-bottom:0.5rem;display:flex;align-items:center;gap:0.5rem}
+.save-card p{font-size:0.68rem;color:var(--muted);line-height:1.6;margin-bottom:0.85rem}
+.save-btn{display:flex;align-items:center;justify-content:center;gap:0.5rem;width:100%;padding:0.72rem;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.75rem;font-weight:500;cursor:pointer;border:1px solid transparent;transition:all 0.2s;margin-bottom:0.45rem}
+.save-btn.export{background:var(--gold);color:#1a0f06;border-color:var(--gold)}
+.save-btn.import{background:rgba(138,171,82,0.15);border-color:rgba(138,171,82,0.4);color:var(--sage)}
+.save-btn.danger{background:rgba(224,80,64,0.1);border-color:rgba(224,80,64,0.3);color:var(--red)}
+.save-btn:not(.export){background:rgba(122,184,196,0.08)}
+.save-btn.export:hover{opacity:0.85}
+.save-btn:hover{opacity:0.8}
+.save-info{background:rgba(201,168,76,0.05);border:1px solid var(--border);border-radius:8px;padding:0.75rem;font-size:0.65rem;color:var(--muted);line-height:1.75}
+.save-info strong{color:var(--gold)}
+.save-status{font-size:0.68rem;padding:0.5rem 0.75rem;border-radius:7px;text-align:center;margin-top:0.4rem;display:none}
+.save-status.ok{background:rgba(138,171,82,0.15);border:1px solid rgba(138,171,82,0.3);color:var(--sage);display:block}
+.save-status.err{background:rgba(224,80,64,0.1);border:1px solid rgba(224,80,64,0.3);color:var(--red);display:block}
+.save-stats{display:grid;grid-template-columns:1fr 1fr;gap:0.45rem;margin-bottom:0.85rem}
+.save-stat{background:rgba(255,255,255,0.04);border-radius:7px;padding:0.6rem 0.7rem;text-align:center}
+.save-stat .sv{font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--moon)}
+.save-stat .sl{font-size:0.56rem;color:var(--muted);margin-top:0.1rem}
+/* ARROSAGE TRACKER */
+.arr-tracker{margin-top:0.4rem;display:flex;align-items:center;justify-content:space-between;gap:0.5rem;flex-wrap:wrap}
+.arr-btn{background:rgba(122,184,196,0.12);border:1px solid rgba(122,184,196,0.3);color:var(--sky);padding:0.28rem 0.7rem;border-radius:20px;font-size:0.6rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;white-space:nowrap}
+.arr-btn:hover{background:rgba(122,184,196,0.25)}
+.arr-btn.done{background:rgba(138,171,82,0.15);border-color:rgba(138,171,82,0.4);color:var(--sage)}
+.arr-status{font-size:0.58rem;display:flex;align-items:center;gap:0.3rem;flex:1;min-width:0}
+.arr-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.arr-dot.ok{background:var(--sage)}
+.arr-dot.soon{background:var(--gold)}
+.arr-dot.late{background:var(--red)}
+.arr-dot.never{background:var(--muted)}
+.arr-next{font-size:0.57rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.arr-history{margin-top:0.35rem;display:flex;gap:0.25rem;flex-wrap:wrap}
+.arr-hist-dot{width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:0.5rem;cursor:pointer;border:1px solid var(--border);transition:all 0.15s;flex-direction:column;gap:0}
+.arr-hist-dot.filled{background:rgba(122,184,196,0.2);border-color:rgba(122,184,196,0.4)}
+.arr-hist-dot:hover{border-color:var(--gold)}
+.arr-sep{height:1px;background:var(--border);margin:0.55rem 0 0.4rem}
+/* RAVAGEURS */
+.rav-wrap{padding:0 1rem 1.5rem;display:flex;flex-direction:column;gap:0.5rem}
+.rav-card{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:7px;padding:0.78rem;cursor:pointer}
+.rav-hdr{display:flex;align-items:center;justify-content:space-between}
+.rav-name{font-family:'Playfair Display',serif;font-size:0.88rem;color:var(--moon)}
+.rav-bdg{font-size:0.56rem;padding:0.1rem 0.38rem;border-radius:7px}
+.rav-bdg.d{background:rgba(224,80,64,0.14);border:1px solid rgba(224,80,64,0.28);color:var(--red)}
+.rav-bdg.m{background:rgba(201,168,76,0.14);border:1px solid rgba(201,168,76,0.28);color:var(--gold)}
+.rav-body{margin-top:0.55rem;display:none;font-size:0.63rem;color:var(--muted);line-height:1.6}
+.rav-body.open{display:block}
+.rav-lbl{font-size:0.55rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--gold);margin:0.4rem 0 0.18rem}
+.rav-body strong{color:var(--cream)}
+.rav-per{font-size:0.6rem;color:var(--muted);margin-top:0.35rem;padding-top:0.35rem;border-top:1px solid rgba(255,255,255,0.05);font-style:italic}
+/* GEL */
+.gel-wrap{padding:0 1rem 1.5rem;display:flex;flex-direction:column;gap:0.75rem}
+.gel-status{border-radius:9px;padding:0.9rem;text-align:center;border:1px solid}
+.gel-status.ok{background:rgba(90,158,58,0.09);border-color:rgba(90,158,58,0.28)}
+.gel-status.warn{background:rgba(201,168,64,0.09);border-color:rgba(201,168,64,0.28)}
+.gel-status.danger{background:rgba(224,80,64,0.1);border-color:rgba(224,80,64,0.28)}
+.gel-ico{font-size:2rem;margin-bottom:0.25rem}
+.gel-tit{font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:0.22rem}
+.gel-desc{font-size:0.67rem;color:var(--muted);line-height:1.4}
+.gel-fc{display:flex;gap:0.35rem;overflow-x:auto;padding-bottom:2px}
+.gd{flex:0 0 auto;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:5px;padding:0.42rem 0.5rem;text-align:center;min-width:46px}
+.gd.danger{border-color:rgba(224,80,64,0.38);background:rgba(224,80,64,0.07)}
+.gd.warn{border-color:rgba(201,168,64,0.38);background:rgba(201,168,64,0.07)}
+.gd-n{font-size:0.54rem;color:var(--muted)}
+.gd-m{font-size:0.78rem;font-weight:500}
+.gd-m.cold{color:var(--red)}.gd-m.cool{color:var(--gold)}.gd-m.ok{color:var(--sage)}
+.gel-chk{background:rgba(0,0,0,0.18);border:1px solid var(--border);border-radius:8px;padding:0.8rem}
+.gel-chk h3{font-family:'Playfair Display',serif;font-size:0.85rem;color:var(--gold);margin-bottom:0.6rem}
+.gel-item{display:flex;align-items:flex-start;gap:0.55rem;margin-bottom:0.45rem;font-size:0.65rem;color:var(--cream);cursor:pointer;padding:0.25rem;border-radius:4px;transition:background 0.15s}
+.gel-item:hover{background:rgba(255,255,255,0.04)}
+.gel-item input{accent-color:var(--gold);width:13px;height:13px;flex-shrink:0;margin-top:2px}
+.gel-item.done{opacity:0.38;text-decoration:line-through}
+.gel-sj{font-size:0.58rem;color:var(--muted);margin-top:0.1rem}
+.gel-dates{background:rgba(201,168,76,0.05);border:1px solid var(--border);border-radius:8px;padding:0.8rem}
+.gel-dates h3{font-family:'Playfair Display',serif;font-size:0.85rem;color:var(--gold);margin-bottom:0.55rem}
+.gel-dr{font-size:0.65rem;color:var(--cream);margin-bottom:0.35rem;line-height:1.45}
+.gel-dr span{color:var(--muted)}
+/* JOURNAL */
+.jrnl-wrap{padding:0 1rem 1.5rem;display:flex;flex-direction:column;gap:0.75rem}
+.jform{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:0.85rem;display:flex;flex-direction:column;gap:0.5rem}
+.jform h3{font-family:'Playfair Display',serif;font-size:0.85rem;color:var(--gold)}
+.jr{display:grid;grid-template-columns:1fr 1fr;gap:0.45rem}
+.jin,.jsel,.jta{width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--cream);padding:0.38rem 0.65rem;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:0.7rem;outline:none}
+.jin:focus,.jsel:focus,.jta:focus{border-color:var(--gold)}
+.jsel option{background:var(--bg)}
+.jta{resize:vertical;min-height:58px;line-height:1.5}
+.jbtn{padding:0.45rem 1.1rem;background:var(--gold);color:var(--bg);border:none;border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.7rem;font-weight:500;transition:opacity 0.2s}
+.jbtn:hover{opacity:0.85}
+.jbtn.del{background:rgba(224,80,64,0.18);color:var(--red);border:1px solid rgba(224,80,64,0.28)}
+.jlist{display:flex;flex-direction:column;gap:0.45rem}
+.jentry{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:6px;padding:0.72rem}
+.je-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:0.35rem}
+.je-date{font-size:0.58rem;color:var(--muted)}
+.je-plant{font-family:'Playfair Display',serif;font-size:0.85rem;color:var(--moon)}
+.je-type{font-size:0.55rem;padding:0.09rem 0.38rem;border-radius:6px;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.2);color:var(--gold)}
+.je-note{font-size:0.63rem;color:var(--muted);line-height:1.5;font-style:italic;margin-top:0.2rem}
+.je-qty{font-size:0.6rem;color:var(--sky);margin-top:0.18rem}
+.jempty{font-size:0.7rem;color:var(--muted);text-align:center;padding:1.5rem;font-style:italic}
+/* LEGEND */
+.legend{display:flex;flex-wrap:wrap;gap:0.35rem;padding:0.55rem 1rem;background:rgba(0,0,0,0.16);border-bottom:1px solid var(--border);font-size:0.58rem;color:var(--moon);justify-content:center}
+footer{text-align:center;padding:1.3rem 1rem;font-size:0.6rem;color:var(--muted);border-top:1px solid var(--border)}
+footer em{color:var(--gold)}
+.brow{display:flex;gap:0.45rem;flex-wrap:wrap}
+
+/* INSTALL MODAL */
+#install-modal h3{font-family:'Playfair Display',serif;color:var(--gold);margin-bottom:0.8rem;font-size:1rem}
+#install-modal ol{padding-left:1.2rem;margin:0.5rem 0}
+#install-modal li{margin-bottom:0.4rem}
+#install-modal strong{color:var(--moon)}
+/* PWA INSTALL BANNER */
+.pwa-banner{position:fixed;bottom:0;left:0;right:0;background:#1a0f06;border-top:1px solid var(--border);padding:0.7rem 1rem;display:flex;align-items:center;justify-content:space-between;gap:0.75rem;z-index:200;transform:translateY(100%);transition:transform 0.3s ease;box-shadow:0 -4px 20px rgba(0,0,0,0.4)}
+.pwa-banner.show{transform:translateY(0)}
+.pwa-banner-text{font-size:0.68rem;color:var(--cream);line-height:1.4}
+.pwa-banner-text strong{color:var(--gold);display:block;margin-bottom:0.1rem}
+.pwa-banner-btns{display:flex;gap:0.4rem;flex-shrink:0}
+.pwa-btn{padding:0.38rem 0.75rem;border-radius:7px;font-size:0.65rem;font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:500;border:none;transition:opacity 0.2s}
+.pwa-btn.install{background:var(--gold);color:var(--bg)}
+.pwa-btn.dismiss{background:rgba(255,255,255,0.07);color:var(--muted);border:1px solid var(--border)}
+.pwa-btn:hover{opacity:0.82}
+/* OFFLINE BADGE */
+.offline-badge{position:fixed;top:0;left:0;right:0;background:rgba(224,80,64,0.92);color:#fff;text-align:center;font-size:0.65rem;padding:0.28rem;z-index:300;display:none}
+.offline-badge.show{display:block}
+/* UPDATE BADGE */
+.update-badge{position:fixed;top:0;left:0;right:0;background:rgba(201,168,76,0.95);color:#1a0f06;text-align:center;font-size:0.65rem;padding:0.28rem;z-index:300;display:none;cursor:pointer;font-weight:500}
+.update-badge.show{display:block}
+/* NOTIFICATION BTN */
+.notif-btn{display:flex;align-items:center;gap:0.4rem;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--moon);padding:0.35rem 0.7rem;border-radius:10px;cursor:pointer;font-size:0.62rem;font-family:'DM Sans',sans-serif;margin:0 1rem 0.5rem}
+.notif-btn:hover{border-color:var(--gold)}
+/* IndexedDB status */
+.db-status{font-size:0.55rem;color:var(--sage);text-align:right;padding:0 1rem 0.2rem;opacity:0.7}
+</style>
+</head>
+<body>
+
+<div class="offline-badge" id="offline-badge">📵 Mode hors-ligne — météo indisponible, données en cache</div>
+<div class="update-badge" id="update-badge" onclick="applyUpdate()">🔄 Mise à jour disponible — cliquez pour actualiser</div>
+<div class="pwa-banner" id="pwa-banner">
+  <div class="pwa-banner-text">
+    <strong>📲 Installer Potager</strong>
+    Accès rapide, fonctionne hors-ligne
+  </div>
+  <div class="pwa-banner-btns">
+    <button class="pwa-btn dismiss" onclick="dismissBanner()">✕</button>
+    <button class="pwa-btn install" id="btn-install-pwa" onclick="installPWA()">Installer</button>
+  </div>
+</div>
+
+<!-- MODALE INSTRUCTIONS INSTALLATION -->
+<div id="install-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:500;align-items:flex-end;justify-content:center">
+  <div id="install-modal-content" style="background:#1a1008;border:1px solid var(--border);border-radius:16px 16px 0 0;padding:1.5rem;width:100%;max-width:520px;max-height:80vh;overflow-y:auto;font-size:0.75rem;color:var(--cream);line-height:1.7">
+  </div>
+</div>
+
+<div class="hdr">
+  <h1>🌱 Mon Potager — Savoie</h1>
+  <p>Lune · Météo · Légumes · Rotation · Compagnonnage · Arrosage · Ravageurs · Journal</p>
+</div>
+
+<nav class="nav">
+  <button class="nb on" onclick="nav('s-home',this)">🏠 Accueil</button>
+  <button class="nb" onclick="nav('s-veg',this)">🥕 Légumes</button>
+  <button class="nb" onclick="nav('s-agenda',this)">📅 Agenda</button>
+  <button class="nb" onclick="nav('s-rot',this)">🔄 Rotation</button>
+  <button class="nb" onclick="nav('s-comp',this)">🤝 Compagnonnage</button>
+  <button class="nb" onclick="nav('s-arr',this)">💧 Arrosage</button>
+  <button class="nb" onclick="nav('s-rav',this)">🐛 Ravageurs</button>
+  <button class="nb" onclick="nav('s-gel',this)">🌡️ Gel</button>
+  <button class="nb" onclick="nav('s-jrnl',this)">📓 Journal</button>
+  <button class="nb" onclick="nav('s-save',this)">💾 Sauvegarde</button>
+</nav>
+
+<!-- ACCUEIL -->
+<div class="sec on" id="s-home">
+  <div class="live">
+    <div class="moon-box">
+      <canvas id="mc" width="65" height="65"></canvas>
+      <div class="moon-name" id="mpn">…</div>
+      <div id="mdir"></div>
+      <div style="font-size:0.58rem;color:var(--muted);margin-top:0.08rem" id="mday"></div>
+      <div class="moon-tip" id="mtip"></div>
+      <div style="font-size:0.56rem;color:var(--muted);margin-top:0.1rem" id="mdet"></div>
+    </div>
+    <div class="wx-box">
+      <div class="wx-loc">⛅ Chambéry · Savoie (73)</div>
+      <div id="wxc"><div class="wx-load">Chargement météo…</div></div>
+    </div>
+  </div>
+  <div class="cjour" id="cjour">🌱 …</div>
+  <div class="legend">
+    <span>🌕 Lune montante — semer, récolter</span>
+    <span>🌑 Lune descendante — planter, tailler</span>
+    <span>🍅 Jour fruit · 🌿 Feuille · 🧅 Racine · 🌸 Fleur</span>
+  </div>
+  <div class="stit" style="margin-top:0.4rem">Tâches de <span id="mois-titre">ce mois</span></div>
+  <div id="acc-mois" style="padding:0.5rem 1rem 1rem;font-size:0.7rem;color:var(--muted);line-height:2"></div>
+
+  <!-- BOUTON INSTALL PERMANENT -->
+  <div id="install-home-block" style="padding:0 1rem 1.5rem">
+    <div style="background:rgba(201,168,76,0.07);border:1px solid rgba(201,168,76,0.2);border-radius:12px;padding:1rem;text-align:center">
+      <div style="font-size:0.7rem;color:var(--muted);margin-bottom:0.6rem" id="install-status-text">
+        📲 Installer <strong style="color:var(--gold)">Potager</strong> sur votre téléphone pour un accès rapide hors-ligne
+      </div>
+      <button id="install-settings-btn" onclick="installPWA()"
+        style="background:var(--gold);color:#1a0f06;border:none;border-radius:8px;padding:0.65rem 1.5rem;font-family:'DM Sans',sans-serif;font-weight:600;font-size:0.8rem;cursor:pointer;width:100%">
+        📲 Installer l'application
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- LÉGUMES -->
+<div class="sec" id="s-veg">
+  <div class="stit">Guide des <span>légumes</span></div>
+  <div class="ctrl">
+    <input class="si" id="si" type="text" placeholder="🔍 Rechercher un légume…" oninput="renderVeg()">
+    <div class="flts">
+      <button class="fb on" onclick="ft('all',this)">Tous</button>
+      <button class="fb" onclick="ft('fruit',this)">🍅 Fruits</button>
+      <button class="fb" onclick="ft('feuille',this)">🥬 Feuilles</button>
+      <button class="fb" onclick="ft('racine',this)">🧅 Racines</button>
+      <button class="fb" onclick="ft('gousse',this)">🫘 Gousses</button>
+      <button class="fb" onclick="ft('bulbe',this)">🧄 Bulbes</button>
+      <button class="fb" onclick="ft('fleur',this)">🌸 Fleurs</button>
+      <button class="fb" onclick="ft('tige',this)">🌿 Tiges</button>
+    </div>
+  </div>
+  <div class="vgrid" id="gr"></div>
+</div>
+
+<!-- AGENDA -->
+<div class="sec" id="s-agenda">
+  <div class="stit">Agenda <span>mensuel</span></div>
+  <p class="ssub">Toutes les tâches du potager mois par mois</p>
+  <div class="cal-grid" id="cg"></div>
+</div>
+
+<!-- ROTATION -->
+<div class="sec" id="s-rot">
+  <div class="stit">Rotation des <span>cultures</span></div>
+  <p class="ssub">Ne jamais replanter la même famille au même endroit deux années de suite</p>
+  <div class="rot-wrap">
+    <div class="rot-box">
+      <h3>🔄 Cycle de rotation recommandé (4 ans)</h3>
+      <div class="rule-row">
+        <span class="ftag" style="background:rgba(201,80,64,0.18);color:#e07050;border:1px solid rgba(201,80,64,0.28)">Solanacées</span>
+        <span class="rarrow">→</span>
+        <span class="ftag" style="background:rgba(122,184,196,0.15);color:var(--sky);border:1px solid rgba(122,184,196,0.28)">Légumineuses</span>
+        <span class="rarrow">→</span>
+        <span class="ftag" style="background:rgba(180,150,220,0.15);color:#c896c8;border:1px solid rgba(180,150,220,0.28)">Crucifères</span>
+        <span class="rarrow">→</span>
+        <span class="ftag" style="background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid rgba(201,168,76,0.28)">Alliacées</span>
+      </div>
+      <div style="font-size:0.63rem;color:var(--muted);margin-top:0.5rem;line-height:1.65">
+        <strong style="color:var(--cream)">Pourquoi ?</strong> Chaque famille épuise des nutriments différents et laisse des pathogènes spécifiques. La rotation casse les cycles et régénère naturellement le sol.<br><br>
+        <strong style="color:var(--cream)">Règle d'or :</strong> Les légumineuses fixent l'azote — les placer avant les légumes gourmands (choux, tomates, courges).
+      </div>
+    </div>
+    <div>
+      <div style="font-family:'Playfair Display',serif;font-size:0.88rem;color:var(--gold);margin-bottom:0.5rem;padding:0 0.1rem">Familles botaniques</div>
+      <div id="fam-list"></div>
+    </div>
+    <div class="eviter-box">
+      <div style="font-size:0.68rem;color:var(--red);margin-bottom:0.5rem;font-weight:500">❌ Associations à éviter absolument</div>
+      ❌ <strong>Fenouil</strong> — s'isole : nuit à presque tous les légumes<br>
+      ❌ <strong>Oignon / Ail</strong> après <strong>Oignon / Ail</strong> — maladies des bulbes<br>
+      ❌ <strong>Pomme de terre</strong> après <strong>Tomate</strong> — mildiou garanti (même famille)<br>
+      ❌ <strong>Chou</strong> après <strong>Chou</strong> — hernie des crucifères<br>
+      ❌ <strong>Carotte</strong> après <strong>Panais / Céleri</strong> — même famille ombellifère<br>
+      ❌ <strong>Haricot / Pois</strong> avec <strong>Oignon / Ail</strong> — alliacées inhibent les légumineuses
+    </div>
+    <div class="rot-box">
+      <h3>✅ Séquences idéales par parcelle</h3>
+      <div style="font-size:0.63rem;color:var(--muted);line-height:2.1;margin-top:0.2rem">
+        <strong style="color:var(--cream)">Parcelle A :</strong> An1 Tomates → An2 Haricots → An3 Choux → An4 Carottes<br>
+        <strong style="color:var(--cream)">Parcelle B :</strong> An1 Courgettes → An2 Épinards → An3 Pommes de terre → An4 Poireaux<br>
+        <strong style="color:var(--cream)">Parcelle C :</strong> An1 Salades → An2 Fèves → An3 Betteraves → An4 Oignons<br>
+        <strong style="color:var(--cream)">Parcelle D :</strong> An1 Carottes → An2 Tomates → An3 Petits pois → An4 Choux
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- COMPAGNONNAGE -->
+<div class="sec" id="s-comp">
+  <div class="stit">Compagnonnage — <span>associations</span></div>
+  <p class="ssub">Les plantes qui se protègent mutuellement... et celles qui se nuisent</p>
+  <div class="comp-wrap">
+    <div style="margin-bottom:0.7rem"><input class="si" type="text" placeholder="🔍 Rechercher une plante…" oninput="renderComp(this.value)"></div>
+    <div id="comp-grid"></div>
+  </div>
+</div>
+
+<!-- ARROSAGE -->
+<div class="sec" id="s-arr">
+  <div class="stit">Calendrier <span>d'arrosage</span></div>
+  <p class="ssub">Besoins en eau selon les légumes et la météo actuelle en Savoie</p>
+  <div class="arr-wrap">
+    <div class="arr-wx"><h3>💧 Situation hydrique aujourd'hui</h3><div id="arr-wx-info"><div class="wx-load">Chargement…</div></div></div>
+    <div class="arr-card"><h3>🌡️ Gros besoins en eau</h3><div id="arr-high"></div></div>
+    <div class="arr-card"><h3>💧 Besoins moyens</h3><div id="arr-mid"></div></div>
+    <div class="arr-card"><h3>🏜️ Peu gourmands en eau</h3><div id="arr-low"></div></div>
+    <div class="arr-tips">
+      <h4>📋 Règles d'or — Savoie</h4>
+      <ul>
+        <li>Arroser le matin tôt ou en soirée, jamais en plein soleil</li>
+        <li>Toujours arroser au pied, jamais sur les feuilles (mildiou)</li>
+        <li>En altitude (+800 m) : réduire les fréquences, les nuits fraîches limitent l'évaporation</li>
+        <li>Après une pluie : attendre 2–3 jours avant d'arroser</li>
+        <li>Paillis (foin, paille) : divise par 2 les besoins en eau en été</li>
+        <li>Tomates : 1 arrosage profond vaut mieux que 3 superficiels</li>
+        <li>Courgettes et concombres : l'irrégularité donne des fruits difformes ou amers</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- RAVAGEURS -->
+<div class="sec" id="s-rav">
+  <div class="stit">Ravageurs & <span>maladies</span></div>
+  <p class="ssub">Identification et traitements naturels — appuyer pour déployer</p>
+  <div class="rav-wrap" id="rav-list"></div>
+</div>
+
+<!-- GEL -->
+<div class="sec" id="s-gel">
+  <div class="stit">Alertes <span>gel</span> — Savoie</div>
+  <p class="ssub">Protection des cultures sensibles en cas de gel prévu</p>
+  <div class="gel-wrap">
+    <button class="notif-btn" onclick="requestNotifPermission()" id="notif-btn">🔔 Activer les alertes gel</button>
+    <div id="gel-status"><div class="wx-load">Chargement météo…</div></div>
+    <div>
+      <div style="font-size:0.75rem;color:var(--gold);font-family:'Playfair Display',serif;margin-bottom:0.45rem">Températures minimales — 7 jours</div>
+      <div class="gel-fc" id="gel-fc"></div>
+    </div>
+    <div class="gel-chk"><h3>✅ Checklist protection avant gel</h3><div id="gel-checks"></div></div>
+    <div class="gel-dates">
+      <h3>📅 Dates clés — Savoie</h3>
+      <div class="gel-dr">🌡️ <strong>Saints de Glace</strong> <span>11–13 mai — derniers gels tardifs possibles en plaine</span></div>
+      <div class="gel-dr">🏔️ <strong>Altitude 600–900 m</strong> <span>→ décaler de 2–3 semaines toutes les plantations</span></div>
+      <div class="gel-dr">🏔️ <strong>Altitude 900–1200 m</strong> <span>→ décaler d'1 mois, mise en terre fin mai–début juin</span></div>
+      <div class="gel-dr">❄️ <strong>Premier gel automnal</strong> <span>généralement octobre en vallée, septembre en altitude</span></div>
+      <div class="gel-dr">🧊 <strong>Plants à protéger dès 2°C</strong> <span>tomate, courgette, haricot, basilic, concombre, aubergine, poivron</span></div>
+      <div class="gel-dr">🌿 <strong>Résistants au gel</strong> <span>mâche (–15°C), épinard (–10°C), chou (–8°C), poireau (–8°C), carotte (–5°C)</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- JOURNAL -->
+<div class="sec" id="s-jrnl">
+  <div class="stit">Journal de <span>bord</span></div>
+  <p class="ssub">Notez semis, récoltes et observations — votre mémoire du potager</p>
+  <div class="jrnl-wrap">
+    <div class="jform">
+      <h3>➕ Nouvelle entrée</h3>
+      <div class="jr">
+        <input class="jin" id="j-date" type="date">
+        <select class="jsel" id="j-type">
+          <option value="semis">🌱 Semis</option>
+          <option value="plantation">🪴 Plantation</option>
+          <option value="recolte">🌾 Récolte</option>
+          <option value="taille">✂️ Taille</option>
+          <option value="traitement">🧪 Traitement</option>
+          <option value="observation">👁️ Observation</option>
+        </select>
+      </div>
+      <input class="jin" id="j-plant" type="text" placeholder="Légume / plante…">
+      <div class="jr">
+        <input class="jin" id="j-qty" type="text" placeholder="Quantité / poids (optionnel)">
+        <select class="jsel" id="j-meteo">
+          <option value="">Météo du jour…</option>
+          <option value="☀️ Ensoleillé">☀️ Ensoleillé</option>
+          <option value="⛅ Nuageux">⛅ Nuageux</option>
+          <option value="🌧️ Pluie">🌧️ Pluie</option>
+          <option value="❄️ Gel">❄️ Gel</option>
+          <option value="🌫️ Brouillard">🌫️ Brouillard</option>
+        </select>
+      </div>
+      <textarea class="jta" id="j-note" placeholder="Notes, observations, résultats…"></textarea>
+      <div class="brow">
+        <button class="jbtn" onclick="addEntry()">Enregistrer</button>
+        <button class="jbtn del" onclick="clearJournal()">Tout effacer</button>
+      </div>
+    </div>
+    <div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.45rem">
+        <div style="font-family:'Playfair Display',serif;font-size:0.85rem;color:var(--gold)">Entrées</div>
+        <input class="si" style="max-width:155px;font-size:0.62rem;padding:0.28rem 0.55rem" type="text" placeholder="Filtrer…" oninput="renderJournal(this.value)">
+      </div>
+      <div class="db-status" id="db-status">💾 Stockage local actif</div><div class="jlist" id="jlist"></div>
+    </div>
+  </div>
+</div>
+
+<div class="sec" id="s-save">
+  <div class="stit">Sauvegarde & <span>Restauration</span></div>
+  <p class="ssub">Exportez toutes vos données pour les sauvegarder ou les recharger après une mise à jour</p>
+  <div class="save-wrap">
+
+    <!-- STATS -->
+    <div class="save-card">
+      <h3>📊 Données actuelles</h3>
+      <div class="save-stats" id="save-stats">
+        <div class="save-stat"><div class="sv" id="st-journal">–</div><div class="sl">Entrées journal</div></div>
+        <div class="save-stat"><div class="sv" id="st-arrosage">–</div><div class="sl">Arrosages cochés</div></div>
+        <div class="save-stat"><div class="sv" id="st-date">–</div><div class="sl">Dernière sauvegarde</div></div>
+        <div class="save-stat"><div class="sv" id="st-size">–</div><div class="sl">Taille des données</div></div>
+      </div>
+      <div class="save-info">
+        <strong>Où sont stockées vos données ?</strong><br>
+        Toutes vos données (journal, arrosages) sont stockées <strong>localement sur votre téléphone</strong>, dans le navigateur. Elles survivent aux mises à jour du site <strong>tant que vous restez sur la même URL Netlify</strong>. L'export ci-dessous crée un fichier de sauvegarde que vous pouvez conserver dans vos photos, Google Drive ou email.
+      </div>
+    </div>
+
+    <!-- EXPORT -->
+    <div class="save-card">
+      <h3>⬇️ Exporter mes données</h3>
+      <p>Génère un fichier <strong>.json</strong> contenant tout votre journal et vos historiques d'arrosage. Conservez-le précieusement — c'est votre sauvegarde complète.</p>
+      <button class="save-btn export" onclick="exportData()">⬇️ Télécharger la sauvegarde</button>
+      <button class="save-btn" style="background:rgba(122,184,196,0.1);border:1px solid rgba(122,184,196,0.3);color:var(--sky)" onclick="exportEmail()">📧 Envoyer par email</button>
+      <div class="save-status" id="export-status"></div>
+    </div>
+
+    <!-- IMPORT -->
+    <div class="save-card">
+      <h3>⬆️ Charger une sauvegarde</h3>
+      <p>Sélectionnez un fichier <strong>.json</strong> exporté précédemment pour restaurer toutes vos données. Vos données actuelles seront <strong>fusionnées</strong> (pas écrasées).</p>
+      <button class="save-btn import" onclick="document.getElementById('file-import').click()">⬆️ Charger un fichier de sauvegarde</button>
+      <input type="file" id="file-import" accept=".json" style="display:none" onchange="importData(this)">
+      <div style="font-size:0.6rem;color:var(--muted);margin-bottom:0.5rem">
+        💡 Vous pouvez aussi remplacer les données existantes si vous cochez l'option ci-dessous.
+      </div>
+      <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.65rem;color:var(--muted);cursor:pointer;margin-bottom:0.6rem">
+        <input type="checkbox" id="import-overwrite" style="accent-color:var(--red)">
+        Écraser les données existantes (au lieu de fusionner)
+      </label>
+      <div class="save-status" id="import-status"></div>
+    </div>
+
+    <!-- DANGER -->
+    <div class="save-card">
+      <h3>⚠️ Réinitialisation</h3>
+      <p>Efface <strong>toutes les données</strong> de l'application. Action irréversible — exportez d'abord une sauvegarde.</p>
+      <button class="save-btn danger" onclick="resetAllData()">🗑️ Tout effacer</button>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <p>🌱 Guide biodynamique · Potager Savoie · <em>Adapter selon votre altitude et microclimat</em></p>
+  <p style="margin-top:0.25rem">⚠️ Saints de Glace 11–13 mai — attendre le 15 mai avant de planter les espèces frileuses</p>
+</footer>
+
+<script>
+// ── NAVIGATION ──
+function nav(id,btn){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  btn.classList.add('on');
+  window.scrollTo(0,0);
+  if(id==='s-save') setTimeout(refreshSaveStats, 50);
+}
+
+// ── DONNÉES ──
+const MF=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+const MA=['J','F','M','A','M','J','J','A','S','O','N','D'];
+const DA=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+
+const VEG=[
+  {e:'🥗',n:'Salade / Laitue',t:'feuille',c:'#6b8c3a',s:[3,4,5,6,7,8],p:[4,5,6,7,8,9],r:[5,6,7,8,9,10],jl:'feuille',ta:'Couper les feuilles extérieures pour prolonger la récolte.',co:'<strong>Semis toutes les 3 semaines</strong> pour récolte continue mai–octobre. Mi-ombre en juillet-août.'},
+  {e:'🍅',n:'Tomate',t:'fruit',c:'#c94040',s:[2,3],p:[5,6],r:[7,8,9,10],jl:'fruit',ta:'Supprimer les gourmands (juin–août) en lune descendante. Éboutonner fin août.',co:'<strong>Après le 15 mai</strong>. Butter en juin. Palissage indispensable. Arroser au pied uniquement.'},
+  {e:'🫑',n:'Poivron / Piment',t:'fruit',c:'#e07030',s:[1,2,3],p:[5,6],r:[8,9,10],jl:'fruit',ta:'Pincer les premières fleurs. Supprimer branches faibles.',co:'Besoin de <strong>chaleur : min 18°C la nuit</strong>. Semis tôt en janvier.'},
+  {e:'🧅',n:'Oignon',t:'bulbe',c:'#c9a84c',s:[2,3],p:[3,4],r:[7,8],jl:'racine',ta:'Casser la hampe florale. Écraser les fanes en août.',co:'Récolter quand les fanes <strong>jaunissent et tombent</strong>. Sécher 2 semaines.'},
+  {e:'🧄',n:'Ail',t:'bulbe',c:'#e8dfc0',s:[],p:[10,11,3],r:[6,7],jl:'racine',ta:"Casser la hampe florale dès qu'elle s'enroule.",co:"Ail d'hiver (oct–nov) plus productif. Planter pointe en haut à <strong>5 cm</strong>."},
+  {e:'🧅',n:'Échalote',t:'bulbe',c:'#b87040',s:[],p:[2,3],r:[7,8],jl:'racine',ta:'Pas de taille.',co:'Planter à <strong>la surface</strong>. Un bulbe donne 6–8 échalotes.'},
+  {e:'🥒',n:'Concombre',t:'fruit',c:'#5a9e3a',s:[4,5],p:[5,6],r:[7,8,9],jl:'fruit',ta:'Pincer après 6–8 feuilles. Tailler branches secondaires.',co:'<strong>Récolter à 15–20 cm</strong> pour stimuler. Arrosage abondant et régulier.'},
+  {e:'🥦',n:'Brocoli',t:'fleur',c:'#3a7a3a',s:[4,5,6],p:[6,7],r:[9,10,11],jl:'fleur',ta:'Couper la tête principale avant floraison.',co:'<strong>Couper avant ouverture des fleurs</strong>. Récoltes successives 4–6 semaines.'},
+  {e:'🥬',n:'Chou-fleur',t:'fleur',c:'#e8dfc0',s:[4,5,6],p:[6,7],r:[9,10,11],jl:'fleur',ta:'Replier les feuilles sur la pomme pour protéger la blancheur.',co:'Très <strong>sensible aux écarts thermiques</strong>. Sol non acide. 60 cm espacement.'},
+  {e:'🥬',n:'Courgette',t:'fruit',c:'#5a8c3a',s:[4,5],p:[5,6],r:[7,8,9,10],jl:'fruit',ta:'Couper les vieilles feuilles en août pour éviter oïdium.',co:'<strong>Récolter à 15–20 cm</strong>. Se transforme en courge géante en 3 jours si oubliée.'},
+  {e:'🥕',n:'Carotte',t:'racine',c:'#e07030',s:[3,4,5,6,7],p:[],r:[7,8,9,10,11],jl:'racine',ta:'Éclaircir à 5 cm dès la levée.',co:'Semis direct, <strong>jamais de repiquage</strong>. Sol meuble sans cailloux. Voile anti-mouche.'},
+  {e:'🫘',n:'Haricot vert',t:'gousse',c:'#5a9e3a',s:[5,6,7],p:[],r:[7,8,9],jl:'fruit',ta:'Récolter régulièrement pour stimuler.',co:'Semis direct <strong>après le 15 mai</strong>. Nain ou grimpant (2 m).'},
+  {e:'🫘',n:'Haricot à rames',t:'gousse',c:'#3a7a3a',s:[5,6],p:[],r:[8,9,10],jl:'fruit',ta:'Pincer le sommet au haut du tuteur.',co:'Tuteurs de <strong>2 m minimum</strong>. Très productif sur longue saison.'},
+  {e:'🟢',n:'Petit pois',t:'gousse',c:'#6b8c3a',s:[2,3,4,9,10],p:[],r:[5,6,7],jl:'fruit',ta:'Palissage léger.',co:'Semis dès <strong>février–mars</strong> (résiste à –5°C). Récolter avant durcissement.'},
+  {e:'🥬',n:'Épinard',t:'feuille',c:'#2a6a3a',s:[2,3,4,8,9,10],p:[],r:[4,5,6,9,10,11],jl:'feuille',ta:'Couper feuilles extérieures. Arracher à la montée en fleurs.',co:'Monte en graines par chaleur — <strong>semer printemps et automne</strong>.'},
+  {e:'🥬',n:'Blette / Bette',t:'feuille',c:'#c9a84c',s:[4,5,6,7],p:[5,6,7],r:[7,8,9,10,11,12],jl:'feuille',ta:'Couper à 5 cm du sol pour repousse.',co:'Très productive et <strong>résistante aux premières gelées</strong>.'},
+  {e:'🧅',n:'Poireau',t:'tige',c:'#8aab52',s:[2,3,4],p:[6,7],r:[10,11,12,1,2],jl:'racine',ta:'Butter progressivement pour blanchir.',co:'Planter en <strong>trou profond</strong>. Légume hivernal savoyard par excellence.'},
+  {e:'🍆',n:'Aubergine',t:'fruit',c:'#6a3a8c',s:[2,3],p:[5,6],r:[8,9,10],jl:'fruit',ta:'Pincer après 4–5 ramifications. Limiter à 3–6 fruits.',co:'La plus frileuse — <strong>min 20°C</strong>. Variétés longues recommandées en Savoie.'},
+  {e:'🎃',n:'Potiron / Courge',t:'fruit',c:'#e07030',s:[4,5],p:[5,6],r:[9,10],jl:'fruit',ta:'Supprimer tiges secondaires après 2–3 fruits. Pincer en août.',co:'<strong>2–3 m² par plant</strong>. Planche sous les fruits. Conservation 6 mois.'},
+  {e:'🌽',n:'Maïs doux',t:'fruit',c:'#c9a84c',s:[4,5],p:[5,6],r:[8,9],jl:'fruit',ta:'Supprimer les talles.',co:'Planter en <strong>bloc</strong> (pollinisation par le vent). Soies brunes = prêt.'},
+  {e:'🥜',n:'Fève',t:'gousse',c:'#5a8c3a',s:[10,11,2,3],p:[],r:[5,6,7],jl:'fruit',ta:'Couper les 4–5 cm du sommet en floraison.',co:'Semis automne = récolte précoce mai. Résiste à <strong>–10°C</strong>. Fixe azote.'},
+  {e:'🥬',n:'Chou de Milan',t:'feuille',c:'#3a6a2a',s:[4,5,6],p:[6,7],r:[9,10,11,12,1,2],jl:'feuille',ta:'Éliminer feuilles jaunissantes.',co:'<strong>Le gel améliore la saveur</strong>. Espacer à 60 cm.'},
+  {e:'🥬',n:'Chou rouge',t:'feuille',c:'#8a3a6a',s:[3,4,5],p:[5,6],r:[9,10,11],jl:'feuille',ta:'Éliminer feuilles abîmées.',co:'<strong>4–5 mois</strong> entre semis et récolte. Conservation 2 mois en cave.'},
+  {e:'🥬',n:'Chou de Bruxelles',t:'fleur',c:'#5a8c3a',s:[4,5],p:[6,7],r:[10,11,12,1,2],jl:'fleur',ta:'Supprimer feuilles basses. Pincer le sommet en septembre.',co:'Récolter <strong>du bas vers le haut</strong>. Le gel améliore la saveur.'},
+  {e:'🟣',n:'Betterave',t:'racine',c:'#8a2a5a',s:[3,4,5,6,7],p:[],r:[7,8,9,10,11],jl:'racine',ta:'Éclaircir à 10 cm. Pousses comestibles.',co:'Tremper les graines <strong>24h avant semis</strong>. Récolter avant 8–10 cm de diamètre.'},
+  {e:'🥔',n:'Pomme de terre',t:'racine',c:'#c9a84c',s:[],p:[3,4,5],r:[7,8,9,10],jl:'racine',ta:'Butter deux fois. Récolter 2 sem. après jaunissement.',co:'Planter les <strong>pommes de terre germées</strong> (yeux vers le haut) à 10 cm.'},
+  {e:'🌿',n:'Navet',t:'racine',c:'#e8dfc0',s:[3,4,5,7,8,9],p:[],r:[6,7,8,10,11,12],jl:'racine',ta:'Éclaircir à 10–15 cm.',co:'Cycle court <strong>45–60 jours</strong>. Récolter jeune pour saveur douce.'},
+  {e:'🌿',n:'Radis',t:'racine',c:'#c94040',s:[3,4,5,6,7,8,9],p:[],r:[4,5,6,7,8,9,10],jl:'racine',ta:'Pas de taille.',co:'Culture la plus rapide : <strong>3–4 semaines</strong>.'},
+  {e:'🌿',n:'Panais',t:'racine',c:'#c9a84c',s:[3,4],p:[],r:[10,11,12,1,2],jl:'racine',ta:'Pas de taille.',co:'Germination lente. <strong>Le gel le sucre</strong>. Long cycle 8–9 mois.'},
+  {e:'🥬',n:'Mâche',t:'feuille',c:'#3a6a3a',s:[8,9,10],p:[],r:[11,12,1,2,3],jl:'feuille',ta:'Récolter par touffe entière.',co:'Salade hivernale par excellence. <strong>Résiste à –15°C</strong>.'},
+  {e:'🥬',n:'Roquette',t:'feuille',c:'#5a9e3a',s:[3,4,5,8,9,10],p:[],r:[4,5,6,9,10,11],jl:'feuille',ta:'Couper les fleurs pour retarder la montée.',co:'Monte vite par chaleur. <strong>Printemps et automne</strong> de prédilection.'},
+  {e:'🌿',n:'Fenouil bulbeux',t:'tige',c:'#8aab52',s:[5,6,7],p:[6,7,8],r:[9,10,11],jl:'racine',ta:'Butter la base pour blanchir.',co:'<strong>Arrosage régulier</strong> indispensable. Monte en fleurs par stress hydrique.'},
+  {e:'🌿',n:'Persil',t:'feuille',c:'#3a8a3a',s:[3,4,8,9],p:[],r:[6,7,8,9,10,11],jl:'feuille',ta:'Couper les tiges à la base.',co:'Germination longue — <strong>tremper 24h</strong>. Bisannuelle.'},
+  {e:'🌿',n:'Ciboulette',t:'feuille',c:'#6b8c3a',s:[3,4,5],p:[4,5],r:[4,5,6,7,8,9,10],jl:'feuille',ta:'Couper à 5 cm après floraison.',co:'Vivace. <strong>Repousse chaque année</strong>. Diviser tous les 3 ans.'},
+  {e:'🌿',n:'Artichaut',t:'fleur',c:'#5a8c5a',s:[2,3],p:[4,5],r:[6,7,8],jl:'fleur',ta:'Couper têtes avant ouverture. Tiges à 30 cm après récolte.',co:'Vivace productive <strong>3–5 ans</strong>. Protéger souche en hiver.'},
+  {e:'🌿',n:'Asperge',t:'tige',c:'#8aab52',s:[3,4],p:[3,4],r:[4,5,6],jl:'racine',ta:'Ne pas récolter les 2 premières années.',co:'<strong>2 ans avant 1ère récolte</strong>, puis 20 ans de production.'},
+  {e:'🌿',n:'Rhubarbe',t:'tige',c:'#c94040',s:[3,4],p:[3,10,11],r:[4,5,6],jl:'feuille',ta:'Supprimer hampes florales. Ne jamais récolter plus du tiers.',co:'<strong>Ne pas récolter la 1ère année</strong>. Feuilles toxiques.'},
+  {e:'🌿',n:'Basilic',t:'feuille',c:'#3a8a3a',s:[4,5],p:[5,6],r:[6,7,8,9,10],jl:'feuille',ta:'<strong>Pincer les fleurs</strong> dès apparition.',co:'Très sensible au froid — <strong>après le 15 mai</strong>. Compagnon de la tomate.'},
+  {e:'🌿',n:'Thym',t:'feuille',c:'#8aab52',s:[3,4,5],p:[4,5,9],r:[5,6,7,8,9,10],jl:'feuille',ta:'Tailler un tiers après floraison.',co:'Vivace résistante. <strong>Sol drainant et sec</strong>. Attire les pollinisateurs.'},
+  {e:'🌿',n:'Romarin',t:'feuille',c:'#4a7a8a',s:[4,5],p:[4,5,9],r:[5,6,7,8,9,10,11,12],jl:'feuille',ta:'Tailler légèrement après floraison.',co:'Résiste à –15°C. <strong>Sol très drainant</strong>. Haie aromatique idéale.'},
+  {e:'🌿',n:'Menthe',t:'feuille',c:'#2a8a5a',s:[3,4,5],p:[4,5],r:[5,6,7,8,9],jl:'feuille',ta:'Couper à 10 cm après floraison.',co:'<strong>Très envahissante</strong> — cultiver en pot.'},
+];
+
+const COMP=[
+  {n:'Tomate',e:'🍅',b:['Basilic','Persil','Carotte','Oignon','Ciboulette','Thym','Sauge'],m:['Fenouil','Chou','Pomme de terre','Betterave'],w:'Le basilic repousse les pucerons et thrips. Éviter les cucurbitacées — forte concurrence.'},
+  {n:'Carotte',e:'🥕',b:['Ciboulette','Poireau','Laitue','Romarin','Tomate'],m:['Aneth','Fenouil','Panais'],w:'Ciboulette et poireau repoussent la mouche de la carotte. Fenouil inhibe la croissance des racines.'},
+  {n:'Chou / Brassicacées',e:'🥦',b:['Céleri','Salade','Poireau','Ciboulette','Menthe','Aneth','Thym'],m:['Tomate','Fenouil','Moutarde'],w:'Céleri et aromates repoussent la piéride et les pucerons cendrés. Ne jamais mélanger avec les solanacées.'},
+  {n:'Haricot / Pois',e:'🫘',b:['Carotte','Concombre','Maïs','Courgette','Radis','Betterave'],m:['Oignon','Ail','Poireau','Échalote','Fenouil'],w:'Les légumineuses fixent l\'azote. Les alliacées (oignon, ail) inhibent les nodosités racinaires.'},
+  {n:'Courgette / Courge',e:'🥬',b:['Maïs','Haricot','Radis','Capucine','Tournesol'],m:['Pomme de terre','Fenouil'],w:'Association "Trois Sœurs" avec maïs et haricot. La capucine attire les pucerons à distance.'},
+  {n:'Oignon / Ail',e:'🧅',b:['Carotte','Betterave','Tomate','Laitue','Ciboulette'],m:['Haricot','Pois','Sauge','Asperge'],w:'Puissants répulsifs naturels pour pucerons et acariens. Toxiques pour les légumineuses.'},
+  {n:'Poireau',e:'🧅',b:['Carotte','Céleri','Laitue','Chou','Tomate'],m:['Oignon','Haricot','Pois'],w:'Poireau + carotte = association classique : ils se repoussent mutuellement leurs mouches respectives.'},
+  {n:'Concombre',e:'🥒',b:['Haricot','Radis','Maïs','Aneth','Ciboulette'],m:['Pomme de terre','Tomate','Sauge'],w:'Radis repoussent les insectes sous la surface. Tomate et pomme de terre concurrencent fortement.'},
+  {n:'Pomme de terre',e:'🥔',b:['Haricot','Maïs','Chou','Raifort','Tagètes'],m:['Tomate','Poivron','Aubergine','Concombre','Fenouil'],w:'Ne jamais associer avec d\'autres solanacées. Les tagètes (soucis) repoussent les nématodes du sol.'},
+  {n:'Laitue / Salade',e:'🥗',b:['Carotte','Radis','Concombre','Oignon','Ciboulette'],m:['Céleri','Persil'],w:'Laitue + carotte + radis = trio parfait. Le radis ameublit le sol.'},
+  {n:'Basilic',e:'🌿',b:['Tomate','Poivron','Asperge'],m:['Sauge','Concombre','Thym'],w:'Le basilic libère des huiles essentielles qui repoussent les pucerons et mouches blanches autour des tomates.'},
+  {n:'Fenouil',e:'🌿',b:['Aneth'],m:['Tomate','Poivron','Chou','Laitue','Haricot','Pois','Courgette','Carotte'],w:'⚠️ Le fenouil est allélopathique : il inhibe la croissance de presque tous les légumes. L\'isoler en bout de potager.'},
+];
+
+const FAMILLES=[
+  {n:'Solanacées',col:'#c94040',v:'Tomate, Poivron, Aubergine, Pomme de terre',a:'Mildiou, doryphore, altise'},
+  {n:'Cucurbitacées',col:'#5a9e3a',v:'Courgette, Concombre, Courge, Potiron',a:'Oïdium, pucerons, mouche blanche'},
+  {n:'Alliacées',col:'#c9a84c',v:'Oignon, Ail, Échalote, Poireau, Ciboulette',a:'Mouche de l\'oignon, rouille'},
+  {n:'Légumineuses',col:'#7ab8c4',v:'Haricot, Pois, Fève, Lentille',a:'Pucerons noirs, bruche'},
+  {n:'Crucifères / Brassicacées',col:'#b896c8',v:'Chou, Brocoli, Chou-fleur, Radis, Navet, Roquette',a:'Piéride, altise, hernie'},
+  {n:'Ombellifères / Apiacées',col:'#e07030',v:'Carotte, Panais, Fenouil, Céleri, Persil',a:'Mouche de la carotte, pucerons'},
+  {n:'Astéracées',col:'#8aab52',v:'Artichaut, Endive, Chicorée, Laitue, Estragon',a:'Pucerons, limaces'},
+  {n:'Chénopodiacées',col:'#8a5a3a',v:'Betterave, Épinard, Blette',a:'Pucerons noirs, mouche de la betterave'},
+];
+
+const RAV=[
+  {n:'Limaces & Escargots',e:'🐌',d:'d',p:'Salades, épinards, jeunes plants, fraises, haricots',sy:'Feuilles et pousses dévorées, traces de mucus argenté',tr:'Cendres au pied des plants, marc de café, barrières en cuivre, pièges à bière. Granulés phosphate de fer (biocompatible). Favoriser crapauds, hérissons, carabes.',pe:'Printemps humide et automne — sortent la nuit et après la pluie'},
+  {n:'Pucerons',e:'🦟',d:'d',p:'Tomates, choux, fèves, haricots, rosiers',sy:'Feuilles enroulées, collantes (miellat), distorsion des pousses, fourmis associées',tr:'Jet d\'eau puissant, savon noir dilué (5 ml/L), décoction d\'ortie ou de tanaisie. Attirer les coccinelles, chrysopes. Planter basilic et capucines à proximité.',pe:'Avril à août — favorisés par chaleur et sécheresse'},
+  {n:'Doryphore',e:'🪲',d:'d',p:'Pomme de terre, aubergine, tomate',sy:'Feuillage dévoré rapidement, larves orangées et adultes rayés jaune/noir',tr:'Ramassage manuel le matin. Décoction de tanaisie. Paillis de paille. Rotation stricte. Spinosad en dernier recours.',pe:'Mai à août — ponte au printemps'},
+  {n:'Mouche de la carotte',e:'🪰',d:'m',p:'Carotte, panais, persil, céleri',sy:'Galeries dans les racines, feuillage jaunit',tr:'Voile anti-insectes dès le semis. Associer avec oignons ou ciboulette. Semis tardif (juin) évite la 1ère génération.',pe:'Mai–juin et septembre–octobre (2 générations)'},
+  {n:'Mildiou (tomate / pomme de terre)',e:'🍂',d:'d',p:'Tomate, pomme de terre, concombre',sy:'Taches brunes huileuses sur feuilles, bord blanc-grisâtre, fruits brunissent',tr:'Bouillie bordelaise préventive. Ne jamais arroser les feuilles. Bonne aération. Supprimer les feuilles atteintes immédiatement.',pe:'Juillet–septembre — favorisé par chaleur + humidité'},
+  {n:'Oïdium',e:'💨',d:'m',p:'Courgette, concombre, courge, chou, pois',sy:'Poudre blanche farineuse sur les feuilles, s\'étend rapidement',tr:'Bicarbonate de soude dilué (10 g/L). Lait dilué à 10%. Décoction de prêle. Retirer les feuilles atteintes.',pe:'Été chaud et sec — apparition soudaine'},
+  {n:'Piéride du chou',e:'🦋',d:'m',p:'Choux, brocoli, chou-fleur, roquette, radis',sy:'Feuilles dévorées avec nervures restantes, œufs jaunes sous les feuilles, chenilles vertes',tr:'Voile anti-insectes. Ramassage des œufs et chenilles. Bacillus thuringiensis (bioinsecticide). Planter sauge et thym à proximité.',pe:'Avril à septembre — papillon blanc visible'},
+  {n:'Altise (petits trous)',e:'🪲',d:'m',p:'Choux, navet, roquette, radis — jeunes plants',sy:'Multitude de petits trous ronds dans les feuilles (1–3 mm)',tr:'Poudre de roche basaltique, cendres. Filet anti-insectes. Arrosage fréquent (n\'aiment pas l\'humidité).',pe:'Avril–juin au stade jeune plant'},
+  {n:'Hernie des crucifères',e:'🌱',d:'d',p:'Choux, navet, radis, roquette, brocoli, chou-fleur',sy:'Galles sur les racines, plant fané, croissance stoppée',tr:'Aucun traitement curatif. Chauler le sol (pH>7). Rotation sur 5–7 ans minimum. Variétés résistantes. Désinfecter les outils.',pe:'Toute l\'année dans le sol — spores persistent 20 ans'},
+  {n:'Taupins (vers fil de fer)',e:'🪱',d:'m',p:'Pomme de terre, carotte, betterave, maïs',sy:'Galeries dans tubercules et racines, plants qui flétrissent',tr:'Rotation. Travailler le sol en automne. Piège à taupins (morceau de pomme de terre enterré). Tagètes repoussent les larves.',pe:'Mars à juin — larves dans le sol 3–5 ans'},
+];
+
+const GEL_CHECKS=[
+  {t:'Rentrer les plants en pot (basilic, poivrons)',sj:'Dès que température prévue < 5°C'},
+  {t:'Couvrir les tomates avec voile P17 ou P30',sj:'Dès que min. < 5°C'},
+  {t:'Couvrir courgettes, concombres, haricots',sj:'Dès que min. < 4°C'},
+  {t:'Butter les pommes de terre',sj:'Dès que gel annoncé'},
+  {t:'Paillis au pied des plants sensibles (10 cm)',sj:'Protection jusqu\'à –2°C'},
+  {t:'Arroser en soirée si gel léger prévu',sj:'L\'eau protège jusqu\'à –2°C'},
+  {t:'Fermer tunnels et serres chaque soir',sj:'Novembre à mai'},
+  {t:'Protéger l\'artichaut avec paillage épais (30 cm)',sj:'Avant premier gel'},
+  {t:'Récolter courges et potirons avant –5°C',sj:'Octobre–novembre'},
+  {t:'Rentrer les bulbes d\'ail si sol saturé',sj:'Avant gel + pluie prolongée'},
+];
+
+const CAL=[
+  {m:'Janvier',a:['Planifier et commander les semences','Semer poivrons/aubergines (sous abri 22°C)','Forçage endives en cave']},
+  {m:'Février',a:['Semis tomates, poivrons (intérieur)','Planter échalotes','Semer céleri, épinards, salades (sous abri)','Planter fèves si doux']},
+  {m:'Mars',a:['Semis salades, betteraves, radis, carottes','Planter ail de printemps, oignons, petits pois','Semer courgettes, concombres fin mars (intérieur)','Préparer et amender le sol']},
+  {m:'Avril',a:['Repiquage tomates, poivrons sous abri','Semis haricots, maïs fin avril (intérieur)','Plantation artichaut, chou-rave','Semis brocoli, chou-fleur pour automne']},
+  {m:'Mai',a:['⚠️ Saints de Glace 11–13 mai','Mise en terre après le 15 : tomates, poivrons, courgettes, concombres','Planter poireaux fin mai','Semis haricots en pleine terre']},
+  {m:'Juin',a:['Taille des gourmands de tomates','Butter les pommes de terre','Planter salades, choux d\'automne','1ères récoltes : salades, radis, épinards, petits pois']},
+  {m:'Juillet',a:['Grande récolte : salades, haricots, courgettes, concombres','Arrosage intensif si sec','Semis automne : mâche, épinards, radis','Taille courgettes (vieilles feuilles)']},
+  {m:'Août',a:['Récolte tomates, poivrons, aubergines','Récolte oignons, ail, échalotes — laisser sécher','Semis mâche, roquette, épinards automne','Pincer tomates tardives']},
+  {m:'Septembre',a:['Récolte courges, potirons, maïs','Plantation choux hiver','Semis dernières salades','Début récolte chou-fleur et brocoli']},
+  {m:'Octobre',a:['Plantation ail hiver','Récolte betteraves, carottes, poireaux','Récolte chou de Bruxelles après gel','Composter et préparer les planches']},
+  {m:'Novembre',a:['Plantation ail hiver tardif','Récolte carottes, navets, panais','Récolte mâche et endives','Protéger les plants sensibles (paillage, voile)']},
+  {m:'Décembre',a:['Récolte poireaux, choux hiver, mâche','Forçage endives en cave','Planifier la rotation des cultures','Entretien outils']},
+];
+
+const ARR={
+  // ── BESOINS ÉLEVÉS ──
+  // Conventionnel : tous les 2j / 3L — Permaculture avec paillage : tous les 4–5j / 1.8L → moyenne : tous les 3j / 2.2L
+  high:[
+    {e:'🥒',n:'Concombre',f:'Tous les 3 jours',l:2.2,no:'Conv. 2j/3L · Perm. 5j/1.5L — Paillis épais indispensable. Irrégularité = fruits amers et creux.'},
+    {e:'🥬',n:'Courgette',f:'Tous les 3–4 jours',l:2,no:'Conv. 2j/3L · Perm. 5j/1.5L — Avec paillage 10 cm, se satisfait des rosées en Savoie hors canicule.'},
+    {e:'🍅',n:'Tomate',f:'2× par semaine',l:2,no:'Conv. 3j/2.5L · Perm. 7j/1.5L — Arrosage profond au pied uniquement. Le stress hydrique contrôlé concentre les arômes.'},
+    {e:'🥬',n:'Chou (pommaison)',f:'1× / 5 jours',l:1.6,no:'Conv. 3j/2L · Perm. 7j/1L — Besoin maximal pendant la pommaison. Paillage = économie de 35%.'},
+    {e:'🌽',n:'Maïs',f:'1× / 5 jours',l:2,no:'Conv. 3j/2.5L · Perm. 7j/1.5L — Critique à la floraison. En permaculture, associé aux courges qui couvrent le sol.'},
+    {e:'🍆',n:'Aubergine',f:'2× par semaine',l:1.8,no:'Conv. 3j/2L · Perm. 7j/1.2L — Sensible mais accepte des cycles sec/humide si progressifs. Paillage sombre pour garder la chaleur.'},
+  ],
+  // ── BESOINS MODÉRÉS ──
+  // Conventionnel : 1×/semaine / 1.5L — Permaculture : 1×/10–14j / 0.8L → moyenne : 1×/10j / 1.1L
+  mid:[
+    {e:'🥕',n:'Carotte',f:'1× / 10 jours',l:1.1,no:'Conv. 7j/1.5L · Perm. 14j/0.8L — Arrosage profond et rare favorise les racines profondes. Semis sous paillis fin.'},
+    {e:'🫘',n:'Haricot',f:'1× / 8 jours',l:1.1,no:'Conv. 7j/1.5L · Perm. 10j/0.8L — Fixateur d\'azote : sol vivant réduit ses besoins. Arroser surtout à la floraison.'},
+    {e:'🥬',n:'Salade',f:'Tous les 3–4 jours',l:0.8,no:'Conv. 2j/1L · Perm. 5j/0.6L — En permaculture, sous ombrage léger en été : besoins divisés par 2. Ne jamais mouiller les feuilles.'},
+    {e:'🧅',n:'Poireau',f:'1× / 10 jours',l:1.1,no:'Conv. 7j/1.5L · Perm. 14j/0.8L — Racine profonde. Butter maintient l\'humidité. Très tolérant en Savoie grâce aux précipitations.'},
+    {e:'🥬',n:'Épinard',f:'1× / 8 jours',l:0.9,no:'Conv. 7j/1L · Perm. 10j/0.7L — Monte en graine par sécheresse. Semer à mi-ombre en été pour réduire les arrosages.'},
+    {e:'🎃',n:'Courge',f:'1× / 8 jours',l:1.6,no:'Conv. 7j/2L · Perm. 10j/1.2L — Feuilles couvre-sol naturel. En permaculture, associée au maïs : quasi autonome après installation.'},
+  ],
+  // ── BESOINS FAIBLES ──
+  // Conventionnel : rare / 0.5–1L — Permaculture : quasi nul / 0.3L → moyenne : très rare / 0.5L
+  low:[
+    {e:'🧄',n:'Ail',f:'1× / 3 semaines',l:0.5,no:'Conv. 21j/0.5L · Perm. jamais/0L — En permaculture sur sol paillé, la rosée suffit hors sécheresse prolongée. Excès d\'eau = pourriture.'},
+    {e:'🧅',n:'Oignon',f:'1× / 2 semaines',l:0.5,no:'Conv. 14j/0.5L · Perm. 21j/0.3L — Cesser tout arrosage 3 sem. avant récolte. La sécheresse finale durcit et sucrée le bulbe.'},
+    {e:'🌿',n:'Thym / Romarin',f:'Quasiment jamais',l:0.3,no:'Conv. rare · Perm. jamais — Plantes méditerranéennes. En sol drainant et paillé, les précipitations savoyardes suffisent à l\'année.'},
+    {e:'🌿',n:'Panais',f:'1× / mois',l:0.8,no:'Conv. mensuel/1L · Perm. pluie suffit/0L — Racine pivot jusqu\'à 60 cm. Quasi autonome en Savoie. Paillage suffit à maintenir l\'humidité.'},
+    {e:'🥜',n:'Fève',f:'1× / 12 jours',l:0.8,no:'Conv. 10j/1L · Perm. 14j/0.6L — Fixatrice d\'azote, tolère la sécheresse. Arroser uniquement à la floraison pour grossir les gousses.'},
+    {e:'🥔',n:'Pomme de terre',f:'1× / 10 jours',l:1,no:'Conv. 7j/1.5L · Perm. 14j/0.7L — Après buttage et paillage, très résistante. Réduire fortement dès que les fanes jaunissent.'},
+    {e:'🌿',n:'Betterave',f:'1× / 10 jours',l:0.9,no:'Conv. 7j/1.2L · Perm. 14j/0.6L — Tolère la sécheresse une fois bien enracinée. Irrégularité = cœur liégeux.'},
+  ]
+};
+
+// ── LUNE ──
+function moon(d){
+  const Y=d.getFullYear(),M=d.getMonth()+1,D=d.getDate(),h=d.getHours()+d.getMinutes()/60;
+  const A=Math.floor((14-M)/12),y=Y+4800-A,m=M+12*A-3;
+  const JDN=D+Math.floor((153*m+2)/5)+365*y+Math.floor(y/4)-Math.floor(y/100)+Math.floor(y/400)-32045;
+  const JD=JDN+(h-12)/24,SYN=29.53058867,K=2451550.26;
+  const pos=((( JD-K)%SYN)+SYN)%SYN;
+  const ill=(1-Math.cos(2*Math.PI*pos/SYN))/2;
+  let pn,pe;
+  if(pos<1.85){pn='Nouvelle Lune';pe='🌑';}else if(pos<7.38){pn='Premier Croissant';pe='🌒';}
+  else if(pos<9.22){pn='Premier Quartier';pe='🌓';}else if(pos<14.77){pn='Gibbeuse Croissante';pe='🌔';}
+  else if(pos<16.61){pn='Pleine Lune';pe='🌕';}else if(pos<22.15){pn='Gibbeuse Décroissante';pe='🌖';}
+  else if(pos<23.99){pn='Dernier Quartier';pe='🌗';}else{pn='Dernier Croissant';pe='🌘';}
+  const up=pos<14.77;
+  const SID=27.32158,sp=(((JD-K)%SID)+SID)%SID;
+  const SG=['Bélier','Taureau','Gémeaux','Cancer','Lion','Vierge','Balance','Scorpion','Sagittaire','Capricorne','Verseau','Poissons'];
+  const ST=['fruit','racine','fleur','feuille','fruit','racine','fleur','feuille','fruit','racine','fleur','feuille'];
+  const si=Math.floor(sp/2.277)%12;
+  return{pos,ill,pn,pe,up,sign:SG[si],type:ST[si]};
+}
+
+function drawMoon(cv,pos){
+  const ctx=cv.getContext('2d'),W=cv.width,cx=W/2,cy=W/2,r=W/2-3;
+  ctx.clearRect(0,0,W,W);
+  const hl=ctx.createRadialGradient(cx,cy,r*0.6,cx,cy,r*1.5);
+  hl.addColorStop(0,'rgba(232,223,192,0.08)');hl.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=hl;ctx.beginPath();ctx.arc(cx,cy,r*1.5,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle='#1a1005';ctx.fill();
+  const ph=pos/29.53;ctx.save();ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.clip();
+  const k=Math.cos(2*Math.PI*ph);ctx.beginPath();
+  if(ph<=0.5){ctx.arc(cx,cy,r,-Math.PI/2,Math.PI/2);const rx=r*Math.abs(k);ctx.bezierCurveTo(cx+(k<0?rx:-rx),cy+r,cx+(k<0?rx:-rx),cy-r,cx,cy-r);}
+  else{ctx.arc(cx,cy,r,Math.PI/2,3*Math.PI/2);const rx=r*Math.abs(k);ctx.bezierCurveTo(cx+(k<0?-rx:rx),cy-r,cx+(k<0?-rx:rx),cy+r,cx,cy+r);}
+  ctx.fillStyle='#e8dfc0';ctx.fill();ctx.restore();
+  ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.strokeStyle='rgba(232,223,192,0.15)';ctx.lineWidth=1;ctx.stroke();
+}
+
+const TIPS={fruit:{up:'🍅 Semer tomates, courgettes, haricots. Récolter légumes-fruits.',dn:'🍅 Planter légumes-fruits en pleine terre. Tailler les tomates.'},feuille:{up:'🥬 Semer salades, épinards, basilic. Récolter herbes aromatiques.',dn:'🥬 Planter salades et choux. Tailler les herbes.'},racine:{up:'🧅 Éviter travaux sur racines. Favoriser feuilles et fruits.',dn:'🧅 Planter carottes, betteraves, ail. Travailler le sol.'},fleur:{up:'🌸 Semer brocoli, chou-fleur. Récolter les têtes florales.',dn:'🌸 Planter choux-fleurs et brocolis. Tailler plantes à fleurs.'}};
+const CJOURS={fruit:{up:'Aujourd\'hui : <strong>Jour Fruit · Lune Montante</strong> — Semez tomates, courgettes et haricots. Récoltez les légumes-fruits pour une saveur optimale.',dn:'Aujourd\'hui : <strong>Jour Fruit · Lune Descendante</strong> — Plantez légumes-fruits en pleine terre. Taillez les tomates, supprimez les gourmands.'},feuille:{up:'Aujourd\'hui : <strong>Jour Feuille · Lune Montante</strong> — Semez salades, épinards et herbes. Récoltez les feuilles au meilleur de leur saveur.',dn:'Aujourd\'hui : <strong>Jour Feuille · Lune Descendante</strong> — Plantez choux et salades. Rempotez et taillez les herbes vivaces.'},racine:{up:'Aujourd\'hui : <strong>Jour Racine · Lune Montante</strong> — Favorisez légumes-feuilles et fruits. Évitez de travailler les racines.',dn:'Aujourd\'hui : <strong>Jour Racine · Lune Descendante</strong> — Idéal pour planter carottes, betteraves, ail, oignons. Travaillez le sol.'},fleur:{up:'Aujourd\'hui : <strong>Jour Fleur · Lune Montante</strong> — Semez brocoli et chou-fleur. Récoltez les têtes florales pour un goût optimal.',dn:'Aujourd\'hui : <strong>Jour Fleur · Lune Descendante</strong> — Plantez choux-fleurs et brocolis. Taillez les plantes à fleurs.'}};
+
+function initMoon(){
+  const m=moon(new Date());
+  drawMoon(document.getElementById('mc'),m.pos);
+  document.getElementById('mpn').textContent=m.pe+' '+m.pn;
+  document.getElementById('mdir').innerHTML=`<span class="bdg ${m.up?'up':'dn'}">${m.up?'↑ Lune Montante':'↓ Lune Descendante'}</span>`;
+  const tl={fruit:'🍅 Jour Fruit',feuille:'🌿 Jour Feuille',racine:'🧅 Jour Racine',fleur:'🌸 Jour Fleur'};
+  document.getElementById('mday').textContent=tl[m.type]+' · Lune en '+m.sign;
+  document.getElementById('mtip').textContent=TIPS[m.type][m.up?'up':'dn'];
+  document.getElementById('mdet').textContent='Illumination '+Math.round(m.ill*100)+'% · Jour '+Math.floor(m.pos)+1+'/30';
+  document.getElementById('cjour').innerHTML='🌱 '+CJOURS[m.type][m.up?'up':'dn'];
+}
+
+// ── MÉTÉO ──
+const WI={0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌦️',53:'🌦️',55:'🌧️',61:'🌧️',63:'🌧️',65:'🌧️',71:'❄️',73:'🌨️',75:'🌨️',80:'🌦️',81:'🌦️',82:'⛈️',95:'⛈️',96:'⛈️',99:'⛈️'};
+const WT={0:'Ciel dégagé',1:'Peu nuageux',2:'Partiellement nuageux',3:'Couvert',45:'Brouillard',51:'Bruine légère',53:'Bruine',55:'Bruine dense',61:'Pluie légère',63:'Pluie',65:'Pluie forte',71:'Neige légère',73:'Neige',75:'Neige forte',80:'Averses légères',81:'Averses',82:'Averses fortes',95:'Orage',96:'Orage avec grêle',99:'Orage violent'};
+const ic=c=>WI[c]||'🌡️';
+const wm=c=>WT[c]||'Météo';
+
+async function loadWx(){
+  try{
+    const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude=45.5646&longitude=5.9178&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,wind_direction_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum&wind_speed_unit=kmh&timezone=Europe%2FParis&forecast_days=7');
+    if(!r.ok)throw 0;
+    const d=await r.json();
+    renderWx(d);renderGel(d);renderArrWx(d);
+  }catch(e){
+    const msg='<div class="wx-load">⚠️ Météo indisponible — vérifiez votre connexion</div>';
+    ['wxc','gel-status','arr-wx-info'].forEach(id=>document.getElementById(id).innerHTML=msg);
+  }
+}
+
+function renderWx(data){
+  const c=data.current,d=data.daily;
+  let alert='';
+  for(let i=0;i<3;i++)if(d.temperature_2m_min[i]<2){alert='<div class="wx-alert">⚠️ Risque de gel — protéger les plants sensibles !</div>';break;}
+  const dirs=['N','NE','E','SE','S','SO','O','NO'],wd=dirs[Math.round(c.wind_direction_10m/45)%8];
+  let fc='';
+  for(let i=0;i<7;i++){const dt=new Date(d.time[i]);fc+=`<div class="fc"><div class="fc-d">${i===0?'Auj.':DA[dt.getDay()]}</div><div class="fc-i">${ic(d.weather_code[i])}</div><div class="fc-x">${Math.round(d.temperature_2m_max[i])}°</div><div class="fc-n">${Math.round(d.temperature_2m_min[i])}°</div></div>`;}
+  document.getElementById('wxc').innerHTML=`${alert}<div class="wx-main"><div class="wx-ico">${ic(c.weather_code)}</div><div><div class="wx-temp">${Math.round(c.temperature_2m)}°C</div><div class="wx-desc">${wm(c.weather_code)}</div></div></div><div class="wx-gr"><div class="wx-it">🌡️ Ressenti <strong>${Math.round(c.apparent_temperature)}°C</strong></div><div class="wx-it">💧 Humidité <strong>${c.relative_humidity_2m}%</strong></div><div class="wx-it">🌬️ Vent <strong>${Math.round(c.wind_speed_10m)} km/h ${wd}</strong></div><div class="wx-it">🌧️ Précip. <strong>${c.precipitation} mm</strong></div></div><div class="wx-fc">${fc}</div>`;
+}
+
+function renderGel(data){
+  const d=data.daily;
+  let sc='ok',gi='✅',gt='Aucun risque de gel',gd='Températures sans danger pour vos cultures.';
+  for(let i=0;i<7;i++){if(d.temperature_2m_min[i]<0){sc='danger';gi='🧊';gt='Gel prévu !';gd='Températures négatives attendues. Protégez immédiatement vos plants sensibles !';break;}else if(d.temperature_2m_min[i]<3){sc='warn';gi='⚠️';gt='Risque de gel';gd='Températures proches de 0°C. Couvrez les plants sensibles le soir.';break;}}
+  document.getElementById('gel-status').innerHTML=`<div class="gel-status ${sc}"><div class="gel-ico">${gi}</div><div class="gel-tit">${gt}</div><div class="gel-desc">${gd}</div></div>`;
+  let fc='';
+  for(let i=0;i<7;i++){const dt=new Date(d.time[i]),mn=d.temperature_2m_min[i],dc=mn<0?'cold':mn<3?'cool':'ok',cl=mn<0?'danger':mn<3?'warn':'';fc+=`<div class="gd ${cl}"><div class="gd-n">${i===0?'Auj.':DA[dt.getDay()]}</div><div style="font-size:0.8rem">${ic(d.weather_code[i])}</div><div class="gd-m ${dc}">${Math.round(mn)}°</div></div>`;}
+  document.getElementById('gel-fc').innerHTML=fc;
+}
+
+function renderArrWx(data){
+  const c=data.current,d=data.daily;
+  const p3=d.precipitation_sum.slice(0,3).reduce((a,b)=>a+b,0),t=Math.round(c.temperature_2m);
+  let co='';
+  if(p3>15)co=`🌧️ <strong>${p3.toFixed(0)} mm</strong> de pluie ces 3 jours — arrosage inutile. Attendre 2–3 jours.`;
+  else if(p3>5)co=`🌦️ <strong>${p3.toFixed(0)} mm</strong> de pluie récente — réduire les arrosages de moitié.`;
+  else if(t>25)co=`☀️ Température élevée (${t}°C) et peu de pluie — <strong>augmenter les arrosages</strong>. Arroser tôt le matin.`;
+  else co=`🌡️ Conditions normales (${t}°C, ${p3.toFixed(0)} mm) — suivre les fréquences standard ci-dessous.`;
+  document.getElementById('arr-wx-info').innerHTML=`<div style="font-size:0.68rem;color:var(--cream);line-height:1.6;padding:0.2rem 0">${co}</div>`;
+}
+
+// ── LÉGUMES ──
+let TYPE='all';
+function ft(type,btn){TYPE=type;document.querySelectorAll('.fb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderVeg();}
+function renderVeg(){
+  const grid=document.getElementById('gr');grid.innerHTML='';
+  const q=(document.getElementById('si').value||'').toLowerCase();
+  const cats=[{k:'fruit',l:'🍅 Légumes-fruits'},{k:'gousse',l:'🫘 Légumes à cosses'},{k:'feuille',l:'🥬 Légumes-feuilles & Aromates'},{k:'racine',l:'🧅 Légumes-racines'},{k:'bulbe',l:'🧄 Légumes-bulbes'},{k:'fleur',l:'🌸 Légumes-fleurs & Têtes'},{k:'tige',l:'🌿 Tiges & Vivaces'}];
+  let any=false;
+  cats.forEach(cat=>{
+    const items=VEG.filter(v=>(TYPE==='all'||v.t===cat.k)&&v.t===cat.k&&(q===''||v.n.toLowerCase().includes(q)));
+    if(!items.length)return;any=true;
+    const h=document.createElement('div');h.className='sg';h.textContent=cat.l;grid.appendChild(h);
+    items.forEach(v=>{const el=document.createElement('div');el.className='card';el.style.setProperty('--c',v.c);el.innerHTML=buildCard(v);grid.appendChild(el);});
+  });
+  if(!any)grid.innerHTML='<div class="empty">Aucun légume trouvé.</div>';
+}
+function buildCard(v){
+  let bar='';
+  MA.forEach((m,i)=>{const mo=i+1,iS=v.s.includes(mo),iP=v.p.includes(mo),iR=v.r.includes(mo);let cl=iS&&iP?'bc sp':iS?'bc s':iP?'bc p':'bc';if(iR)cl+=' r';bar+=`<div class="${cl}" title="${MF[i]}${iS?' Semis':''}${iP?' Plantation':''}${iR?' Récolte':''}"></div>`;});
+  const tl={feuille:'🌿 Jour Feuille',fruit:'🍅 Jour Fruit',racine:'🧅 Jour Racine',fleur:'🌸 Jour Fleur'};
+  const sm=v.s.length?v.s.map(m=>MF[m-1]).join(', '):'—',pl=v.p.length?v.p.map(m=>MF[m-1]).join(', '):'Semis direct',rl=v.r.length?v.r.map(m=>MF[m-1]).join(', '):'—';
+  return`<div class="chd"><div class="cem">${v.e}</div><div><div class="cnm">${v.n}</div><div class="ctp">${v.t}</div></div></div><div class="blbl">Calendrier mensuel</div><div class="babbr">${MA.map(m=>`<span>${m}</span>`).join('')}</div><div class="bar">${bar}</div><div class="bleg"><span class="ls">Semis</span><span class="lp">Plantation</span><span class="lr">Récolte</span></div><div class="ig"><div class="ii"><div class="l">🌱 Semis</div><div class="v">${sm}</div></div><div class="ii"><div class="l">🪴 Mise en terre</div><div class="v">${pl}</div></div><div class="ii"><div class="l">🌾 Récolte</div><div class="v">${rl}</div></div><div class="ii"><div class="l">✂️ Taille</div><div class="v">${v.ta}</div></div></div><div class="tags"><span class="tag ${v.jl}">${tl[v.jl]}</span></div><div class="conseil">${v.co}</div>`;
+}
+
+// ── AGENDA ──
+function buildCal(){const cg=document.getElementById('cg');CAL.forEach(m=>{const d=document.createElement('div');d.className='cal-card';d.innerHTML=`<h3>${m.m}</h3><ul>${m.a.map(a=>`<li>${a}</li>`).join('')}</ul>`;cg.appendChild(d);});}
+
+// ── ROTATION ──
+function buildRotation(){
+  const el=document.getElementById('fam-list');
+  FAMILLES.forEach(f=>{el.innerHTML+=`<div class="fam-row"><div class="fdot" style="background:${f.col}"></div><div><div class="fam-name">${f.n}</div><div class="fam-veg">${f.v}</div><div class="fam-att">⚠️ ${f.a}</div></div></div>`;});
+}
+
+// ── COMPAGNONNAGE ──
+function renderComp(q){
+  q=(q||'').toLowerCase();
+  const grid=document.getElementById('comp-grid');grid.innerHTML='';
+  COMP.filter(c=>q===''||c.n.toLowerCase().includes(q)).forEach(c=>{
+    grid.innerHTML+=`<div class="comp-card"><div class="cp-name">${c.e} ${c.n}</div><div class="cp-lbl g">✅ Bonnes associations</div><div class="cp-items">${c.b.map(x=>`<span class="cpi g">${x}</span>`).join('')}</div><div class="cp-lbl b" style="margin-top:0.35rem">❌ À éviter</div><div class="cp-items">${c.m.map(x=>`<span class="cpi b">${x}</span>`).join('')}</div><div class="cp-lbl w" style="margin-top:0.35rem">💡 Pourquoi</div><div class="cp-why">${c.w}</div></div>`;
+  });
+  if(!document.getElementById('comp-grid').innerHTML)document.getElementById('comp-grid').innerHTML='<div class="empty">Aucune plante trouvée.</div>';
+}
+
+// ── ARROSAGE TRACKER ──
+// Intervalles en jours par niveau
+const ARR_INTERVALS={high:3,mid:9,low:18};
+// Intervalles spécifiques par plante (jours) — moyenne conventionnel/permaculture
+const ARR_DAYS={
+  'Concombre':3,'Courgette':4,'Tomate':4,'Chou (pommaison)':5,'Maïs':5,'Aubergine':4,
+  'Carotte':10,'Haricot':8,'Salade':3,'Poireau':10,'Épinard':8,'Courge':8,
+  'Ail':21,'Oignon':14,'Thym / Romarin':30,'Panais':30,'Fève':12,
+  'Pomme de terre':10,'Betterave':10
+};
+
+// Clé de stockage : 'arr-<nom>-dates' → JSON array de timestamps
+function arrKey(n){return 'arr-'+n.toLowerCase().replace(/[^a-z]/g,'');}
+
+function arrGetDates(n){
+  try{const d=localStorage.getItem(arrKey(n));return d?JSON.parse(d):[];}
+  catch(e){return[];}
+}
+
+function arrAddDate(n){
+  const dates=arrGetDates(n);
+  dates.unshift(Date.now());
+  // Garder les 14 derniers arrosages
+  const trimmed=dates.slice(0,14);
+  localStorage.setItem(arrKey(n),JSON.stringify(trimmed));
+  buildArrosage();
+}
+
+function arrRemoveLast(n){
+  const dates=arrGetDates(n);
+  if(dates.length>0){dates.shift();localStorage.setItem(arrKey(n),JSON.stringify(dates));}
+  buildArrosage();
+}
+
+function arrStatus(n,intervalDays){
+  const dates=arrGetDates(n);
+  if(!dates.length)return{dot:'never',text:'Jamais arrosé',next:'—'};
+  const last=dates[0];
+  const daysSince=Math.floor((Date.now()-last)/(1000*60*60*24));
+  const daysLeft=intervalDays-daysSince;
+  const lastStr=new Date(last).toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+  let dot,text,next;
+  if(daysLeft>2){dot='ok';text=`Il y a ${daysSince}j (${lastStr})`;next=`Prochain dans ${daysLeft}j`;}
+  else if(daysLeft>0){dot='soon';text=`Il y a ${daysSince}j (${lastStr})`;next=`⚠️ Arroser dans ${daysLeft}j`;}
+  else if(daysLeft===0){dot='soon';text=`Il y a ${daysSince}j (${lastStr})`;next=`⚠️ À arroser aujourd'hui`;}
+  else{dot='late';text=`Il y a ${daysSince}j (${lastStr})`;next=`🚨 En retard de ${Math.abs(daysLeft)}j`;}
+  return{dot,text,next};
+}
+
+function buildArrosage(){
+  ['high','mid','low'].forEach(lv=>{
+    const el=document.getElementById('arr-'+lv);
+    el.innerHTML='';
+    ARR[lv].forEach(a=>{
+      const interval=ARR_DAYS[a.n]||ARR_INTERVALS[lv];
+      const st=arrStatus(a.n,interval);
+      const dates=arrGetDates(a.n);
+      // Historique : 7 derniers jours visuels
+      let histHtml='';
+      for(let i=6;i>=0;i--){
+        const d=new Date();d.setDate(d.getDate()-i);
+        const ds=d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+        const wasWatered=dates.some(ts=>{const dd=new Date(ts);return dd.getDate()===d.getDate()&&dd.getMonth()===d.getMonth()&&dd.getFullYear()===d.getFullYear();});
+        histHtml+=`<div class="arr-hist-dot${wasWatered?' filled':''}" title="${ds}">${wasWatered?'💧':''}<span style="font-size:0.42rem;opacity:0.5">${d.getDate()}</span></div>`;
+      }
+      el.innerHTML+=`
+        <div class="arr-row">
+          <div class="arr-plant">${a.e} ${a.n}</div>
+          <div style="text-align:right"><div class="arr-freq">${a.f}</div><div class="arr-l">${a.l} L/m²</div></div>
+        </div>
+        <div class="wbar"><div class="wfill" style="width:${Math.min(100,a.l/3*100)}%"></div></div>
+        <div class="arr-note">${a.no}</div>
+        <div class="arr-tracker">
+          <div class="arr-status">
+            <div class="arr-dot ${st.dot}"></div>
+            <div>
+              <div style="font-size:0.58rem;color:var(--cream)">${st.text}</div>
+              <div class="arr-next">${st.next}</div>
+            </div>
+          </div>
+          <button class="arr-btn${dates.length?'':''}" onclick="arrAddDate('${a.n}')">💧 Arrosé</button>
+        </div>
+        <div class="arr-history">${histHtml}</div>
+        ${dates.length?`<div style="font-size:0.5rem;color:var(--muted);text-align:right;margin-top:0.2rem;cursor:pointer" onclick="arrRemoveLast('${a.n}')">↩ Annuler dernier arrosage</div>`:''}
+        <div class="arr-sep"></div>`;
+    });
+  });
+}
+
+// ── RAVAGEURS ──
+function buildRav(){
+  const el=document.getElementById('rav-list');
+  RAV.forEach((r,i)=>{
+    const div=document.createElement('div');div.className='rav-card';
+    div.innerHTML=`<div class="rav-hdr" onclick="toggleRav(${i})"><div class="rav-name">${r.e} ${r.n}</div><span class="rav-bdg ${r.d}">${r.d==='d'?'⚠️ Dangereux':'⚡ Modéré'}</span></div><div class="rav-body" id="rv-${i}"><div class="rav-lbl">🌱 Plantes touchées</div><div>${r.p}</div><div class="rav-lbl">👁️ Symptômes</div><div>${r.sy}</div><div class="rav-lbl">💚 Traitement naturel</div><div>${r.tr}</div><div class="rav-per">${r.pe}</div></div>`;
+    el.appendChild(div);
+  });
+}
+function toggleRav(i){document.getElementById('rv-'+i).classList.toggle('open');}
+
+// ── GEL CHECKLIST ──
+function buildGelChecks(){
+  const el=document.getElementById('gel-checks');
+  GEL_CHECKS.forEach((g,i)=>{el.innerHTML+=`<label class="gel-item" id="gc-${i}"><input type="checkbox" onchange="toggleGC(${i})"><div><div>${g.t}</div><div class="gel-sj">${g.sj}</div></div></label>`;});
+}
+function toggleGC(i){document.getElementById('gc-'+i).classList.toggle('done');}
+
+// ── JOURNAL ──
+let JNL=[];
+try{const s=localStorage.getItem('potager-jnl');if(s)JNL=JSON.parse(s);}catch(e){}
+function saveJNL(){try{localStorage.setItem('potager-jnl',JSON.stringify(JNL));}catch(e){}}
+const JTYPES={semis:'🌱 Semis',plantation:'🪴 Plantation',recolte:'🌾 Récolte',taille:'✂️ Taille',traitement:'🧪 Traitement',observation:'👁️ Observation'};
+
+function addEntry(){
+  const plant=document.getElementById('j-plant').value.trim();
+  if(!plant){alert('Indiquez le légume ou la plante.');return;}
+  JNL.unshift({id:Date.now(),date:document.getElementById('j-date').value,type:document.getElementById('j-type').value,plant,qty:document.getElementById('j-qty').value.trim(),meteo:document.getElementById('j-meteo').value,note:document.getElementById('j-note').value.trim()});
+  saveJNL();renderJournal('');
+  ['j-plant','j-qty','j-note'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('j-meteo').value='';
+}
+function delEntry(id){JNL=JNL.filter(e=>e.id!==id);saveJNL();renderJournal('');}
+function clearJournal(){if(confirm('Effacer toutes les entrées du journal ?')){JNL=[];saveJNL();renderJournal('');}}
+
+function renderJournal(q){
+  q=(q||'').toLowerCase();
+  const el=document.getElementById('jlist');el.innerHTML='';
+  const items=JNL.filter(e=>q===''||e.plant.toLowerCase().includes(q)||(e.note||'').toLowerCase().includes(q));
+  if(!items.length){el.innerHTML='<div class="jempty">Aucune entrée dans le journal.<br>Commencez à noter vos semis, récoltes et observations !</div>';return;}
+  items.forEach(e=>{
+    const dt=e.date?new Date(e.date).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}):'';
+    el.innerHTML+=`<div class="jentry"><div class="je-hdr"><div><div class="je-plant">${e.plant}</div><div class="je-date">${dt}${e.meteo?' · '+e.meteo:''}</div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.28rem"><span class="je-type">${JTYPES[e.type]||e.type}</span><button class="jbtn del" style="font-size:0.55rem;padding:0.08rem 0.35rem" onclick="delEntry(${e.id})">Suppr.</button></div></div>${e.qty?`<div class="je-qty">📦 ${e.qty}</div>`:''}${e.note?`<div class="je-note">${e.note}</div>`:''}</div>`;
+  });
+}
+
+// ── ACCUEIL MOIS ──
+function buildAccueil(){
+  const mo=new Date().getMonth();
+  document.getElementById('mois-titre').textContent=MF[mo];
+  const el=document.getElementById('acc-mois');
+  el.innerHTML=CAL[mo].a.map(a=>`<div style="padding:0.22rem 0;border-bottom:1px solid var(--border);color:var(--cream)">→ ${a}</div>`).join('');
+}
+
+// ── INIT ──
+document.getElementById('j-date').value=new Date().toISOString().split('T')[0];
+initMoon();
+loadWx();
+renderVeg();
+buildCal();
+buildRotation();
+renderComp('');
+buildArrosage();
+buildRav();
+buildGelChecks();
+renderJournal('');
+buildAccueil();
+
+
+// ════════════════════════════════════════
+// SAUVEGARDE / RESTAURATION
+// ════════════════════════════════════════
+
+// ── Collecter toutes les données ──
+async function collectAllData() {
+  // Journal (IndexedDB)
+  const journal = await idbGetAll();
+
+  // Arrosages (localStorage)
+  const arrosages = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith('arr-')) {
+      try { arrosages[k] = JSON.parse(localStorage.getItem(k)); } catch(e) {}
+    }
+  }
+
+  // Préférences (notif gel, etc.)
+  const prefs = {};
+  ['notif-gel','pwa-dismissed'].forEach(k => {
+    const v = localStorage.getItem(k);
+    if (v !== null) prefs[k] = v;
+  });
+
+  return {
+    version: 2,
+    app: 'potager-savoie',
+    exportDate: new Date().toISOString(),
+    journal,
+    arrosages,
+    prefs
+  };
+}
+
+// ── Mettre à jour les stats de la section ──
+async function refreshSaveStats() {
+  const data = await collectAllData();
+
+  // Comptage journal
+  document.getElementById('st-journal').textContent = data.journal.length;
+
+  // Comptage arrosages (nombre de dates total)
+  let totalArr = 0;
+  Object.values(data.arrosages).forEach(arr => { totalArr += (arr||[]).length; });
+  document.getElementById('st-arrosage').textContent = totalArr;
+
+  // Dernière sauvegarde
+  const last = localStorage.getItem('last-export');
+  document.getElementById('st-date').textContent = last
+    ? new Date(last).toLocaleDateString('fr-FR', {day:'numeric',month:'short',year:'numeric'})
+    : 'Jamais';
+
+  // Taille estimée
+  const size = new Blob([JSON.stringify(data)]).size;
+  document.getElementById('st-size').textContent = size < 1024
+    ? size + ' o'
+    : Math.round(size/1024) + ' Ko';
+}
+
+// ── Export JSON ──
+async function exportData() {
+  try {
+    const data = await collectAllData();
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const dateStr = new Date().toISOString().slice(0,10);
+    a.href = url;
+    a.download = `potager-savoie-${dateStr}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    localStorage.setItem('last-export', new Date().toISOString());
+    showSaveStatus('export-status', 'ok', `✅ Sauvegarde téléchargée — ${data.journal.length} entrées journal, ${Object.keys(data.arrosages).length} plantes suivies`);
+    refreshSaveStats();
+  } catch(e) {
+    showSaveStatus('export-status', 'err', '❌ Erreur lors de l\'export : ' + e.message);
+  }
+}
+
+// ── Export par email ──
+async function exportEmail() {
+  try {
+    const data = await collectAllData();
+    const json = JSON.stringify(data, null, 2);
+    const dateStr = new Date().toLocaleDateString('fr-FR');
+    const subject = encodeURIComponent(`Sauvegarde Potager Savoie — ${dateStr}`);
+    const body = encodeURIComponent(
+      `Sauvegarde du ${dateStr}\n${data.journal.length} entrées journal\n\n` +
+      `Copiez et conservez ce texte :\n\n${json}`
+    );
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    showSaveStatus('export-status', 'ok', '📧 Email préparé — collez les données dans votre messagerie');
+  } catch(e) {
+    showSaveStatus('export-status', 'err', '❌ Impossible d\'ouvrir la messagerie.');
+  }
+}
+
+// ── Import JSON ──
+async function importData(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const overwrite = document.getElementById('import-overwrite').checked;
+
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+
+    // Validation basique
+    if (!data.app || data.app !== 'potager-savoie') {
+      showSaveStatus('import-status', 'err', '❌ Fichier invalide — ce n\'est pas une sauvegarde Potager Savoie.');
+      return;
+    }
+
+    let journalCount = 0, arrCount = 0;
+
+    // Restaurer le journal
+    if (data.journal && Array.isArray(data.journal)) {
+      if (overwrite) await idbClear();
+      for (const entry of data.journal) {
+        await idbPut(entry);
+        journalCount++;
+      }
+    }
+
+    // Restaurer les arrosages
+    if (data.arrosages && typeof data.arrosages === 'object') {
+      if (overwrite) {
+        // Effacer les arrosages existants
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith('arr-')) localStorage.removeItem(k);
+        }
+      }
+      Object.entries(data.arrosages).forEach(([k, v]) => {
+        if (overwrite) {
+          localStorage.setItem(k, JSON.stringify(v));
+        } else {
+          // Fusion : combiner et dédupliquer par timestamp
+          const existing = JSON.parse(localStorage.getItem(k) || '[]');
+          const merged = [...new Set([...existing, ...v])].sort((a,b) => b-a);
+          localStorage.setItem(k, JSON.stringify(merged));
+        }
+        arrCount++;
+      });
+    }
+
+    // Restaurer les préférences
+    if (data.prefs) {
+      Object.entries(data.prefs).forEach(([k,v]) => localStorage.setItem(k, v));
+    }
+
+    localStorage.setItem('last-export', new Date().toISOString());
+
+    const mode = overwrite ? 'Remplacement' : 'Fusion';
+    showSaveStatus('import-status', 'ok',
+      `✅ ${mode} réussi — ${journalCount} entrées journal, ${arrCount} plantes arrosage restaurées`);
+
+    await renderJournalDB('');
+    buildArrosage();
+    refreshSaveStats();
+    input.value = '';
+
+  } catch(e) {
+    showSaveStatus('import-status', 'err', '❌ Erreur de lecture : fichier corrompu ou format incorrect.');
+  }
+}
+
+// ── Réinitialisation totale ──
+async function resetAllData() {
+  if (!confirm('⚠️ Effacer TOUTES les données ?\n\nJournal, arrosages, préférences...\n\nCette action est IRRÉVERSIBLE.\nExportez d\'abord une sauvegarde !')) return;
+  if (!confirm('Dernière confirmation — tout effacer définitivement ?')) return;
+
+  await idbClear();
+  for (let i = localStorage.length - 1; i >= 0; i--) {
+    const k = localStorage.key(i);
+    if (k) localStorage.removeItem(k);
+  }
+
+  await renderJournalDB('');
+  buildArrosage();
+  refreshSaveStats();
+  showSaveStatus('import-status', 'ok', '🗑️ Toutes les données ont été effacées.');
+}
+
+// ── Helper affichage status ──
+function showSaveStatus(id, type, msg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.className = 'save-status ' + type;
+  el.textContent = msg;
+  setTimeout(() => { el.style.opacity='0'; el.style.transition='opacity 1s'; setTimeout(()=>{el.className='save-status';el.style.opacity='';el.style.transition='';},1000); }, 5000);
+}
+
+// ── Rafraîchir les stats quand on entre dans la section save ──
+// (intégré directement dans nav() pour éviter toute redéfinition)
+
+
+
+let deferredPrompt = null;
+let swReg = null;
+
+// ── Service Worker Registration ──
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(reg => {
+        swReg = reg;
+        console.log('SW enregistré, scope:', reg.scope);
+        reg.addEventListener('updatefound', () => {
+          const nw = reg.installing;
+          nw.addEventListener('statechange', () => {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              document.getElementById('update-badge').classList.add('show');
+            }
+          });
+        });
+      })
+      .catch(err => console.warn('SW erreur:', err));
+  });
+}
+
+function applyUpdate() {
+  if (swReg && swReg.waiting) {
+    swReg.waiting.postMessage({ type: 'SKIP_WAITING' });
+    window.location.reload();
+  }
+}
+
+// ── Online / Offline detection ──
+function updateOnlineStatus() {
+  document.getElementById('offline-badge').classList.toggle('show', !navigator.onLine);
+}
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+updateOnlineStatus();
+
+// ── Install Banner ──
+// ── DÉTECTION NAVIGATEUR ──
+function getBrowser() {
+  const ua = navigator.userAgent;
+  if (/SamsungBrowser/i.test(ua)) return 'samsung';
+  if (/Firefox/i.test(ua)) return 'firefox';
+  if (/OPR|Opera/i.test(ua)) return 'opera';
+  if (/Chrome/i.test(ua)) return 'chrome';
+  if (/Safari/i.test(ua)) return 'safari';
+  return 'other';
+}
+
+function isAndroid() { return /Android/i.test(navigator.userAgent); }
+function isIOS() { return /iPhone|iPad|iPod/i.test(navigator.userAgent); }
+function isInstalled() {
+  return window.matchMedia('(display-mode: standalone)').matches
+    || window.navigator.standalone === true;
+}
+
+// ── BANNIÈRE INSTALL ──
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Toujours montrer — effacer l'ancienne valeur dismissed
+  localStorage.removeItem('pwa-dismissed');
+  showInstallBanner('native');
+});
+
+function showInstallBanner(mode) {
+  if (isInstalled()) return; // Déjà installée
+  const banner = document.getElementById('pwa-banner');
+  const btnInstall = document.getElementById('btn-install-pwa');
+  if (mode === 'native') {
+    btnInstall.textContent = '📲 Installer';
+    btnInstall.style.display = 'flex';
+  }
+  banner.classList.add('show');
+}
+
+function installPWA() {
+  if (deferredPrompt) {
+    // Chrome Android : installation native
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(r => {
+      deferredPrompt = null;
+      if (r.outcome === 'accepted') {
+        document.getElementById('pwa-banner').classList.remove('show');
+      }
+    });
+  } else {
+    // Pas de prompt natif : montrer les instructions manuelles
+    showManualInstructions();
+  }
+}
+
+function dismissBanner() {
+  document.getElementById('pwa-banner').classList.remove('show');
+}
+
+function showManualInstructions() {
+  const browser = getBrowser();
+  const modal = document.getElementById('install-modal');
+  const content = document.getElementById('install-modal-content');
+  let html = '';
+
+  if (isAndroid()) {
+    if (browser === 'chrome') {
+      html = `<h3>📲 Installer sur Android (Chrome)</h3>
+        <ol>
+          <li>Appuyez sur le menu <strong>⋮</strong> (3 points) en haut à droite</li>
+          <li>Appuyez sur <strong>"Ajouter à l'écran d'accueil"</strong> ou <strong>"Installer l'application"</strong></li>
+          <li>Confirmez → l'icône <strong>Potager</strong> apparaît sur votre accueil</li>
+        </ol>`;
+    } else if (browser === 'samsung') {
+      html = `<h3>📲 Installer sur Android (Samsung Internet)</h3>
+        <ol>
+          <li>Appuyez sur le menu <strong>☰</strong> en bas à droite</li>
+          <li>Appuyez sur <strong>"Ajouter page à"</strong></li>
+          <li>Choisissez <strong>"Écran d'accueil"</strong></li>
+          <li>Confirmez → l'icône <strong>Potager</strong> apparaît sur votre accueil</li>
+        </ol>`;
+    } else if (browser === 'firefox') {
+      html = `<h3>📲 Installer sur Android (Firefox)</h3>
+        <p style="color:var(--gold);margin-bottom:0.7rem">⚠️ Firefox sur Android ne supporte pas l'installation PWA.</p>
+        <p>Pour installer Potager comme appli, ouvrez ce même lien dans <strong>Chrome</strong> ou <strong>Samsung Internet</strong>.</p>
+        <p style="margin-top:0.5rem;font-size:0.68rem;color:var(--muted)">Lien : <strong>${window.location.href}</strong></p>`;
+    } else {
+      html = `<h3>📲 Installer sur Android</h3>
+        <ol>
+          <li>Ouvrez ce lien dans <strong>Chrome</strong></li>
+          <li>Menu <strong>⋮</strong> → <strong>"Installer l'application"</strong></li>
+        </ol>
+        <p style="margin-top:0.5rem;font-size:0.68rem;color:var(--muted)">${window.location.href}</p>`;
+    }
+  } else if (isIOS()) {
+    html = `<h3>📲 Installer sur iPhone/iPad</h3>
+      <ol>
+        <li>Ouvrez dans <strong>Safari</strong> (obligatoire sur iOS)</li>
+        <li>Appuyez sur le bouton <strong>Partager</strong> (carré avec flèche)</li>
+        <li>Faites défiler → <strong>"Sur l'écran d'accueil"</strong></li>
+        <li>Confirmez → l'icône <strong>Potager</strong> apparaît</li>
+      </ol>`;
+  } else {
+    html = `<h3>📲 Installer l'application</h3>
+      <p>Ouvrez ce lien sur votre smartphone dans Chrome Android pour l'installer.</p>`;
+  }
+
+  content.innerHTML = html + `<button onclick="document.getElementById('install-modal').style.display='none'"
+    style="margin-top:1rem;width:100%;padding:0.7rem;background:var(--gold);color:#1a0f06;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">
+    Fermer</button>`;
+  modal.style.display = 'flex';
+}
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('pwa-banner').classList.remove('show');
+  deferredPrompt = null;
+  // Cacher le bouton install dans les settings
+  const btn = document.getElementById('install-settings-btn');
+  if (btn) btn.innerHTML = '✅ Application installée';
+});
+
+// Montrer bannière après 1.5s si pas encore installée (pour tous navigateurs)
+window.addEventListener('load', () => {
+  // Masquer le bloc install si déjà installée
+  if (isInstalled()) {
+    const block = document.getElementById('install-home-block');
+    if (block) block.style.display = 'none';
+  }
+  setTimeout(() => {
+    if (!isInstalled() && !deferredPrompt) {
+      document.getElementById('pwa-banner').classList.add('show');
+    }
+  }, 1500);
+});
+
+// ── Notifications ──
+async function requestNotifPermission() {
+  if (!('Notification' in window)) {
+    alert('Votre navigateur ne supporte pas les notifications.');
+    return;
+  }
+  const perm = await Notification.requestPermission();
+  const btn = document.getElementById('notif-btn');
+  if (perm === 'granted') {
+    btn.textContent = '🔔 Alertes gel activées';
+    btn.style.color = 'var(--sage)';
+    btn.style.borderColor = 'rgba(138,171,82,0.4)';
+    localStorage.setItem('notif-gel', '1');
+    scheduleGelCheck();
+  } else {
+    btn.textContent = '🔕 Notifications refusées';
+  }
+}
+
+function sendGelNotif(msg) {
+  if (Notification.permission === 'granted') {
+    new Notification('🧊 Alerte Gel — Potager Savoie', {
+      body: msg,
+      icon: './icons/icon-192.png',
+      tag: 'gel-alert',
+      renotify: true
+    });
+  }
+}
+
+function scheduleGelCheck() {
+  // Vérifie la météo et envoie une notif si gel prévu
+  fetch('https://api.open-meteo.com/v1/forecast?latitude=45.5646&longitude=5.9178&daily=temperature_2m_min&timezone=Europe%2FParis&forecast_days=3')
+    .then(r => r.json())
+    .then(data => {
+      const mins = data.daily.temperature_2m_min;
+      for (let i = 0; i < mins.length; i++) {
+        if (mins[i] < 0) {
+          sendGelNotif(`Gel prévu (${Math.round(mins[i])}°C) — Protégez vos plants sensibles !`);
+          return;
+        } else if (mins[i] < 3) {
+          sendGelNotif(`Risque de gel (${Math.round(mins[i])}°C) — Couvrez vos tomates et courgettes.`);
+          return;
+        }
+      }
+    }).catch(() => {});
+}
+
+// ── IndexedDB pour le Journal (remplacement localStorage) ──
+let DB = null;
+const DB_NAME = 'potager-db', DB_VER = 1, STORE = 'journal';
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(STORE)) {
+        const store = db.createObjectStore(STORE, { keyPath: 'id' });
+        store.createIndex('date', 'date');
+        store.createIndex('plant', 'plant');
+      }
+    };
+    req.onsuccess = e => { DB = e.target.result; resolve(DB); };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function idbGetAll() {
+  return new Promise((resolve) => {
+    if (!DB) { resolve([]); return; }
+    const tx = DB.transaction(STORE, 'readonly');
+    const req = tx.objectStore(STORE).getAll();
+    req.onsuccess = () => resolve(req.result.sort((a,b) => b.id - a.id));
+    req.onerror = () => resolve([]);
+  });
+}
+
+function idbPut(entry) {
+  return new Promise((resolve) => {
+    if (!DB) { resolve(); return; }
+    const tx = DB.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).put(entry);
+    tx.oncomplete = resolve;
+  });
+}
+
+function idbDelete(id) {
+  return new Promise((resolve) => {
+    if (!DB) { resolve(); return; }
+    const tx = DB.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).delete(id);
+    tx.oncomplete = resolve;
+  });
+}
+
+function idbClear() {
+  return new Promise((resolve) => {
+    if (!DB) { resolve(); return; }
+    const tx = DB.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).clear();
+    tx.oncomplete = resolve;
+  });
+}
+
+// Surcharge des fonctions journal pour utiliser IndexedDB
+async function addEntry() {
+  const plant = document.getElementById('j-plant').value.trim();
+  if (!plant) { alert('Indiquez le légume ou la plante.'); return; }
+  const entry = {
+    id: Date.now(),
+    date: document.getElementById('j-date').value,
+    type: document.getElementById('j-type').value,
+    plant,
+    qty: document.getElementById('j-qty').value.trim(),
+    meteo: document.getElementById('j-meteo').value,
+    note: document.getElementById('j-note').value.trim()
+  };
+  await idbPut(entry);
+  await renderJournalDB('');
+  ['j-plant','j-qty','j-note'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('j-meteo').value = '';
+}
+
+async function delEntry(id) {
+  await idbDelete(id);
+  await renderJournalDB('');
+}
+
+async function clearJournal() {
+  if (confirm('Effacer toutes les entrées du journal ?')) {
+    await idbClear();
+    await renderJournalDB('');
+  }
+}
+
+async function renderJournalDB(q) {
+  q = (q || '').toLowerCase();
+  const all = await idbGetAll();
+  const items = all.filter(e => q === '' || e.plant.toLowerCase().includes(q) || (e.note || '').toLowerCase().includes(q));
+  const el = document.getElementById('jlist');
+  el.innerHTML = '';
+  if (!items.length) {
+    el.innerHTML = '<div class="jempty">Aucune entrée dans le journal.<br>Commencez à noter vos semis, récoltes et observations !</div>';
+    return;
+  }
+  const count = all.length;
+  document.getElementById('db-status').textContent = `💾 ${count} entrée${count>1?'s':''} enregistrée${count>1?'s':''} — stockage local permanent`;
+  items.forEach(e => {
+    const dt = e.date ? new Date(e.date).toLocaleDateString('fr-FR', {day:'numeric',month:'long',year:'numeric'}) : '';
+    el.innerHTML += `<div class="jentry"><div class="je-hdr"><div><div class="je-plant">${e.plant}</div><div class="je-date">${dt}${e.meteo?' · '+e.meteo:''}</div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.28rem"><span class="je-type">${JTYPES[e.type]||e.type}</span><button class="jbtn del" style="font-size:0.55rem;padding:0.08rem 0.35rem" onclick="delEntry(${e.id})">Suppr.</button></div></div>${e.qty?`<div class="je-qty">📦 ${e.qty}</div>`:''}${e.note?`<div class="je-note">${e.note}</div>`:''}</div>`;
+  });
+}
+
+// Migrer localStorage → IndexedDB si données existantes
+async function migrateFromLS() {
+  try {
+    const old = localStorage.getItem('potager-jnl');
+    if (old) {
+      const entries = JSON.parse(old);
+      for (const e of entries) await idbPut(e);
+      localStorage.removeItem('potager-jnl');
+      console.log('Migration localStorage → IndexedDB OK');
+    }
+  } catch(e) {}
+}
+
+// Rerouter renderJournal vers la version IDB
+function renderJournal(q) { renderJournalDB(q); }
+
+// ── Init PWA ──
+openDB().then(async () => {
+  await migrateFromLS();
+  await renderJournalDB('');
+  // Activer les notifs gel si déjà accordé
+  if (localStorage.getItem('notif-gel') && Notification.permission === 'granted') {
+    const btn = document.getElementById('notif-btn');
+    btn.textContent = '🔔 Alertes gel activées';
+    btn.style.color = 'var(--sage)';
+  }
+}).catch(() => {
+  // Fallback localStorage si IDB indisponible
+  try { const s = localStorage.getItem('potager-jnl'); if(s) JNL = JSON.parse(s); } catch(e) {}
+  renderJournal('');
+});
+
+</script>
+</body>
+</html>
